@@ -62,7 +62,7 @@ gb.configure_grid_options(
 
 gb.configure_columns(["hierarquia", "hierarchy_path"], hide=True)
 
-gb.configure_column("tarefa", header_name="Tarefa", headerStyle={"textAlign": "center"}, flex=2)
+gb.configure_column("tarefa", header_name="Tarefa", headerStyle={"textAlign": "center"}, minWidth=300, maxWidth=400)
 
 gb.configure_column("previsto",
     header_name="% Previsto",
@@ -86,7 +86,8 @@ gb.configure_column("barra_concluido",
     header_name="Barra de %",
     headerStyle={"textAlign": "center"},
     cellStyle={"fontFamily": "monospace", "textAlign": "left"},
-    maxWidth=180
+    maxWidth=220, 
+    minWidth=200
 )
 
 gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=120)
