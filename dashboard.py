@@ -99,7 +99,23 @@ AgGrid(
     height=450,
     allow_unsafe_jscode=True,
     enable_enterprise_modules=True,
-    fit_columns_on_grid_load=True
+    fit_columns_on_grid_load=True,
+    custom_css={
+        "#agridToolBar":{
+            "font-size": "18px"
+        },
+        ".ag-cell": { 
+            "font-size": "16px",
+            "line-height": "22px"
+        },
+        ".ag-header-cell-text": {
+            "font-size": "12px",
+        },
+        ".ag-header-cell-label": {
+            "justify-content": "center",  
+            "align-items": "center"        
+        },
+    }
 )
 
 # =========================
