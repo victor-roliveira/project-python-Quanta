@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode  # <-- esta linha corrige o erro
+
 
 # Carregar a planilha
 df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
@@ -14,11 +16,23 @@ df = df[[
 
 df.columns = ["hierarquia", "tarefa", "previsto", "concluido", "responsavel 1", "responsavel 2", "nome dos recursos"]
 
+# Tratar dados numéricos
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
 
 # Criar path da hierarquia para AgGrid (como lista)
 df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
+
+# Criar barra visual com blocos
+def gerar_barra(val, largura=20):
+    try:
+        val = float(val)
+    except:
+        val = 0
+    blocos = int(val * largura)
+    return "█" * blocos + " " * (largura - blocos)
+
+df["barra_concluido"] = df["concluido"].apply(gerar_barra)
 
 # Mostrar como dashboard
 st.set_page_config(page_title="Dashboard com Hierarquia", layout="wide")
@@ -32,24 +46,42 @@ gb = GridOptionsBuilder.from_dataframe(df)
 gb.configure_grid_options(
     treeData=True,
     animateRows=True,
-    groupDefaultExpanded=0,  # -1: tudo expandido, 0: tudo recolhido inicialmente
+    groupDefaultExpanded=0,
     getDataPath=JsCode("function(data) { return data.hierarchy_path; }")
 )
 
 # Esconder colunas auxiliares
 gb.configure_columns(["hierarquia", "hierarchy_path"], hide=True)
 
-# valor em percentual 
-percent_formatter_decimal = JsCode("function(params) { return (params.value * 100).toFixed(1) + '%'; }")
-percent_formatter_direct = JsCode("function(params) { return (params.value).toFixed(1) + '%'; }")
+# Configurar colunas principais
+gb.configure_column("tarefa", header_name="Tarefa", flex=2)
 
-# Ajustar colunas principais
-gb.configure_column("tarefa", header_name="Tarefa", flex=3)
-gb.configure_column("previsto", header_name="% Previsto", type=["numericColumn"], maxWidth=120, valueFormatter=percent_formatter_direct)
-gb.configure_column("concluido", header_name="% Concluído", type=["numericColumn"], maxWidth=120, valueFormatter=percent_formatter_decimal)
-gb.configure_column("responsavel 1", header_name="Responsável 1", maxWidth=120)
-gb.configure_column("responsavel 2", header_name="Responsável 2", maxWidth=120)
-gb.configure_column("nome dos recursos", header_name="Recurso", maxWidth=120)
+gb.configure_column("previsto",
+    header_name="% Previsto",
+    cellStyle={"textAlign": "center"},
+    type=["numericColumn"],
+    maxWidth=120,
+    valueFormatter=JsCode("function(params) { return (params.value).toFixed(1) + '%' }")
+)
+
+gb.configure_column("concluido",
+    header_name="% Concluído",
+    cellStyle={"textAlign": "center"},
+    type=["numericColumn"],
+    maxWidth=120,
+    valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(1) + '%' }")
+)
+
+# 👉 Nova coluna visual com barra
+gb.configure_column("barra_concluido",
+    header_name="Barra de %",
+    cellStyle={"fontFamily": "monospace", "textAlign": "left"},
+    maxWidth=200
+)
+
+gb.configure_column("responsavel 1", header_name="Responsável 1", cellStyle={"textAlign": "center"}, maxWidth=160)
+gb.configure_column("responsavel 2", header_name="Responsável 2", cellStyle={"textAlign": "center"}, maxWidth=160)
+gb.configure_column("nome dos recursos", header_name="Recurso", cellStyle={"textAlign": "center"}, maxWidth=160)
 
 # Exibir grid
 AgGrid(
