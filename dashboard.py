@@ -36,20 +36,6 @@ df = df[colunas]
 # Layout
 # =========================
 st.set_page_config(page_title="Dashboard com Hierarquia", layout="wide")
-# Importar fonte e aplicar estilo global
-st.markdown(
-    """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-        html, body, [class*="css"] {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 
 st.title("Acompanhamento Geral Macaé")
 

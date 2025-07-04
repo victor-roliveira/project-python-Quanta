@@ -30,27 +30,23 @@ def mostrar_tabela(df):
 
     gb.configure_column("previsto",
         header_name="% Previsto",
-        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        valueFormatter=JsCode("function(params) { return (params.value).toFixed(2) + '%' }")
+        valueFormatter=JsCode("function(params) { return (params.value).toFixed(0) + '%' }")
     )
     gb.configure_column("concluido",
         header_name="% Exe",
-        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(2) + '%' }")
+        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
     )
     gb.configure_column("barra_concluido",
         header_name="Barra de %",
-        headerStyle={"textAlign": "center"},
-        cellStyle={"fontFamily": "monospace", "textAlign": "left"},
-        maxWidth=130, minWidth=100
+        maxWidth=170, minWidth=170
     )
-    gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=120)
-    gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=120)
-    gb.configure_column("nome dos recursos", header_name="Recurso", headerStyle={"textAlign": "center"}, cellStyle={"textAlign": "center"}, maxWidth=140)
+    gb.configure_column("responsavel 1", header_name="AT 1", maxWidth=120)
+    gb.configure_column("responsavel 2", header_name="AT 2", maxWidth=120)
+    gb.configure_column("nome dos recursos", header_name="Recurso", headerStyle={"textAlign": "center"}, maxWidth=140)
 
     AgGrid(
         df,
@@ -62,7 +58,7 @@ def mostrar_tabela(df):
         custom_css={
             ".ag-cell": {
                 "font-size": "10px",
-                "font-weight": "600",
+                "font-weight": "800",
                 "line-height": "22px"
             },
             ".ag-header-cell-text": {
