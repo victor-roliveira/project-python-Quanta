@@ -36,8 +36,22 @@ df = df[colunas]
 # Layout
 # =========================
 st.set_page_config(page_title="Dashboard com Hierarquia", layout="wide")
-st.title("📊 Acompanhamento Geral Macaé")
-st.markdown("Explore o andamento das tarefas:")
+# Importar fonte e aplicar estilo global
+st.markdown(
+    """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        html, body, [class*="css"] {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+st.title("Acompanhamento Geral Macaé")
 
 # =========================
 # Abas de navegação
@@ -45,14 +59,16 @@ st.markdown("Explore o andamento das tarefas:")
 aba_tabela, aba_comparativo, aba_atrasadas = st.tabs(["📋 Tabela", "📊 Gráfico Comparativo", "🚨 Tarefas Atrasadas"])
 
 with aba_tabela:
-    mostrar_tabela(df)
+    df_tabela = df.drop(columns=["execucao"])
+    mostrar_tabela(df_tabela)
+
 
 with aba_comparativo:
     # Preparar filtro hierárquico
     df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
-    opcoes_filtro = ["Todos os Tópicos"]
+    opcoes_filtro = ["Projetos Principais"]
     tarefas_ordenadas = sorted(df["hierarquia"].unique(), key=lambda x: [int(p) if p.isdigit() else p for p in x.split(".")])
 
     for h in tarefas_ordenadas:
@@ -60,8 +76,8 @@ with aba_comparativo:
         indent = "  " * h.count(".")
         opcoes_filtro.append(f"{indent}{h} - {tarefa_nome}")
 
-    selecao = st.selectbox("Filtro de Tarefas", opcoes_filtro, index=0)
-    selecao_valor = selecao.strip().split(" ")[0] if selecao != "Todos os Tópicos" else "Todos"
+    selecao = st.selectbox("Filtro de Projetos:", opcoes_filtro, index=0)
+    selecao_valor = selecao.strip().split(" ")[0] if selecao != "Projetos Principais" else "Todos"
 
     mostrar_grafico(df, selecao_valor)
 

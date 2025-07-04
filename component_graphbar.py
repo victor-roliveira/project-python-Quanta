@@ -23,7 +23,7 @@ def mostrar_grafico(df, selecao_valor):
         df_plot["concluido"] *= 100
 
     st.markdown("---")
-    st.subheader("📊 Comparativo de Tarefas")
+    st.subheader("📊 Comparativo de Projetos")
 
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")
@@ -43,7 +43,7 @@ def mostrar_grafico(df, selecao_valor):
     )
 
     fig.update_layout(
-        yaxis=dict(range=[0, 100], tickformat=".2f", title="Percentual (%)"),
+        yaxis=dict(range=[0, 100], tickformat=".0f", title="Percentual (%)"),
         xaxis_title="Tarefa",
         legend_title=""
     )
