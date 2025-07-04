@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
+from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 
 # =========================
 # Carregar dados
@@ -12,10 +13,11 @@ df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 df = df[[
     "Número Hierárquico", "Nome da Tarefa",
     "%concluida prev. (Número10)", "% Concluída",
-    "Responsável 01", "Responsável 02", "Nomes de Recursos"
+    "Responsável 01", "Responsável 02", "Nomes de Recursos", 
+    "Exe."
 ]].copy()
 
-df.columns = ["hierarquia", "tarefa", "previsto", "concluido", "responsavel 1", "responsavel 2", "nome dos recursos"]
+df.columns = ["hierarquia", "tarefa", "previsto", "concluido", "responsavel 1", "responsavel 2", "nome dos recursos", "execucao"]
 
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
@@ -41,3 +43,4 @@ st.markdown("Explore o andamento das tarefas.")
 # =========================
 mostrar_tabela(df)
 mostrar_grafico(df)
+mostrar_graficos_tarefas_atrasadas(df)
