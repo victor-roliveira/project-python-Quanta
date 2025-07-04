@@ -1,25 +1,13 @@
 import streamlit as st
 import plotly.express as px
 
-def mostrar_grafico(df):
+def mostrar_grafico(df, selecao_valor):
     df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
-    # Construção da lista hierárquica com recuo
-    opcoes_filtro = ["Todos os Tópicos"]
-    tarefas_ordenadas = sorted(df["hierarquia"].unique(), key=lambda x: [int(p) if p.isdigit() else p for p in x.split(".")])
-
-    for h in tarefas_ordenadas:
-        tarefa_nome = df[df["hierarquia"] == h]["tarefa"].iloc[0]
-        indent = "  " * (h.count("."))  # recuo visual baseado no nível
-        opcoes_filtro.append(f"{indent}{h} - {tarefa_nome}")
-
-    selecao = st.sidebar.selectbox("Filtro de Tarefas", opcoes_filtro, index=0)
-
-    if selecao == "Todos os Tópicos":
-        df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()  # Apenas tópicos de primeiro nível
+    if selecao_valor == "Todos":
+        df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()
     else:
-        selecao_valor = selecao.strip().split(" ")[0]  # pega apenas o código da hierarquia
         nivel_atual = selecao_valor.count(".") + 1
         proximo_nivel = nivel_atual + 1
 

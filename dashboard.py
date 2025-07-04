@@ -9,7 +9,7 @@ from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 # =========================
 df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
-df = df[[  # selecione e renomeie conforme já fazia
+df = df[[
     "Número Hierárquico", "Nome da Tarefa",
     "%concluida prev. (Número10)", "% Concluída",
     "Responsável 01", "Responsável 02", "Nomes de Recursos", "Exe."
@@ -48,7 +48,22 @@ with aba_tabela:
     mostrar_tabela(df)
 
 with aba_comparativo:
-    mostrar_grafico(df)
+    # Preparar filtro hierárquico
+    df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
+    df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
+
+    opcoes_filtro = ["Todos os Tópicos"]
+    tarefas_ordenadas = sorted(df["hierarquia"].unique(), key=lambda x: [int(p) if p.isdigit() else p for p in x.split(".")])
+
+    for h in tarefas_ordenadas:
+        tarefa_nome = df[df["hierarquia"] == h]["tarefa"].iloc[0]
+        indent = "  " * h.count(".")
+        opcoes_filtro.append(f"{indent}{h} - {tarefa_nome}")
+
+    selecao = st.selectbox("Filtro de Tarefas", opcoes_filtro, index=0)
+    selecao_valor = selecao.strip().split(" ")[0] if selecao != "Todos os Tópicos" else "Todos"
+
+    mostrar_grafico(df, selecao_valor)
 
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
