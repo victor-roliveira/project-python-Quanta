@@ -2,33 +2,33 @@ import streamlit as st
 import plotly.express as px
 
 def mostrar_grafico(df):
-    df["topico_nivel1"] = df["hierarquia"].astype(str).str.split(".").str[0].str.strip()
-    df["topico_nivel2"] = df["hierarquia"].astype(str).apply(lambda x: ".".join(x.split(".")[:2]) if len(x.split(".")) > 1 else x).str.strip()
+    df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
+    df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
+    # Construção da lista hierárquica com recuo
     opcoes_filtro = ["Todos os Tópicos"]
-    topicos1_ord = sorted(df["topico_nivel1"].unique(), key=lambda x: int(x) if x.isdigit() else x)
+    tarefas_ordenadas = sorted(df["hierarquia"].unique(), key=lambda x: [int(p) if p.isdigit() else p for p in x.split(".")])
 
-    for t1 in topicos1_ord:
-        nome_t1 = df[df["topico_nivel1"] == t1]["tarefa"].iloc[0]
-        opcoes_filtro.append(f"{t1} - {nome_t1}")
-        subtopicos = sorted(df[df["topico_nivel1"] == t1]["topico_nivel2"].unique(), key=lambda x: [int(i) if i.isdigit() else i for i in x.split(".")])
-        for stp in subtopicos:
-            if stp != t1:
-                nome_stp = df[df["topico_nivel2"] == stp]["tarefa"].iloc[0]
-                opcoes_filtro.append(f"  {stp} - {nome_stp}")
+    for h in tarefas_ordenadas:
+        tarefa_nome = df[df["hierarquia"] == h]["tarefa"].iloc[0]
+        indent = "  " * (h.count("."))  # recuo visual baseado no nível
+        opcoes_filtro.append(f"{indent}{h} - {tarefa_nome}")
 
     selecao = st.sidebar.selectbox("Filtro de Tarefas", opcoes_filtro, index=0)
 
     if selecao == "Todos os Tópicos":
-        selecao_valor = "Default"
+        df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()  # Apenas tópicos de primeiro nível
     else:
-        selecao_valor = selecao.strip().split(" ")[0]
+        selecao_valor = selecao.strip().split(" ")[0]  # pega apenas o código da hierarquia
+        nivel_atual = selecao_valor.count(".") + 1
+        proximo_nivel = nivel_atual + 1
 
-    if selecao_valor == "Default":
-        df_plot = df[df["topico_nivel1"].isin(["1", "2", "3", "4", "5", "6"])].copy()
-    else:
-        df_plot = df[df["hierarquia"].astype(str).str.startswith(selecao_valor + ".") | (df["hierarquia"].astype(str) == selecao_valor)].copy()
+        df_plot = df[
+            (df["hierarquia"].str.startswith(selecao_valor + ".")) &
+            (df["hierarquia"].str.count(r"\.") + 1 == proximo_nivel)
+        ].copy()
 
+    # Normalização de porcentagens
     if df_plot["previsto"].max() <= 1:
         df_plot["previsto"] *= 100
     if df_plot["concluido"].max() <= 1:
@@ -36,6 +36,10 @@ def mostrar_grafico(df):
 
     st.markdown("---")
     st.subheader("📊 Comparativo de Tarefas")
+
+    if df_plot.empty:
+        st.info("Nenhum subtópico encontrado para este item.")
+        return
 
     fig = px.bar(
         df_plot,
