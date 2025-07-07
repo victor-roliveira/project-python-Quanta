@@ -1,1 +1,5 @@
-streamlit, pandas, plotly, openpyxl, st-aggrid
+streamlit
+pandas
+openpyxl
+plotly
+st-aggrid
