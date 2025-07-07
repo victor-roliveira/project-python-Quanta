@@ -6,6 +6,7 @@ def mostrar_grafico(df, selecao_valor):
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
     if selecao_valor == "Todos":
+        # Mostrar apenas tópicos principais (nível 1 → sem pontos)
         df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()
     else:
         nivel_atual = selecao_valor.count(".") + 1
@@ -23,7 +24,7 @@ def mostrar_grafico(df, selecao_valor):
         df_plot["concluido"] *= 100
 
     st.markdown("---")
-    st.subheader("📊 Comparativo de Projetos")
+    st.subheader("📊 Comparativo de Tarefas")
 
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")

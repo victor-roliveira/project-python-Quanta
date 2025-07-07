@@ -1,13 +1,14 @@
+# ✅ component_table.py (adaptado para Maricá)
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 def mostrar_tabela(df):
-   # Criar coluna com emoji de status
+    # Sinalizador visual de status
     df["tarefa_status"] = df.apply(
-    lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
-    axis=1
+        lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
+        axis=1
     )
 
-    # Reordenar colunas para que tarefa_status fique no lugar de 'tarefa'
+    # Reordenar a coluna para substituir visualmente 'tarefa'
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
@@ -22,33 +23,31 @@ def mostrar_tabela(df):
         getDataPath=JsCode("function(data) { return data.hierarchy_path; }")
     )
 
-    # Esconder as colunas internas
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
-
-    # Exibir a nova coluna com status visual
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
 
     gb.configure_column("previsto",
         header_name="% Previsto",
+        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        cellStyle={"textAlign": "center"},
-        valueFormatter=JsCode("function(params) { return (params.value).toFixed(0) + '%' }")
+        valueFormatter=JsCode("function(params) { return (params.value).toFixed(2) + '%' }")
     )
     gb.configure_column("concluido",
         header_name="% Exe",
+        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        cellStyle={"textAlign": "center"},
-        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
+        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(2) + '%' }")
     )
     gb.configure_column("barra_concluido",
         header_name="Barra de %",
-        maxWidth=170, minWidth=170
+        headerStyle={"textAlign": "center"},
+        cellStyle={"fontFamily": "monospace", "textAlign": "left"},
+        maxWidth=150, minWidth=150
     )
-    gb.configure_column("responsavel 1", header_name="AT 1", maxWidth=120, cellStyle={"textAlign": "center"})
-    gb.configure_column("responsavel 2", header_name="AT 2", maxWidth=120, cellStyle={"textAlign": "center"})
-    gb.configure_column("nome dos recursos", header_name="Recurso", maxWidth=140, cellStyle={"textAlign": "center"})
+    gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("responsavel 2", header_name="Recurso", cellStyle={"textAlign": "center"}, maxWidth=120)
 
     AgGrid(
         df,
@@ -59,12 +58,13 @@ def mostrar_tabela(df):
         fit_columns_on_grid_load=True,
         custom_css={
             ".ag-cell": {
-                "font-size": "10px",
-                "font-weight": "800",
+                "font-size": "12px",
+                "font-weight": "600",
                 "line-height": "22px",
+                "font-family": "'Raleway', sans-serif"
             },
             ".ag-header-cell-text": {
-                "font-size": "14px"                
+                "font-size": "14px"
             },
             ".ag-header-cell-label": {
                 "justify-content": "center",
