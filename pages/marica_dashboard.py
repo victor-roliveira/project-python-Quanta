@@ -35,7 +35,7 @@ df = df[colunas]
 # =========================
 # Layout
 # =========================
-st.set_page_config(page_title="Dashboard com Hierarquia", layout="wide")
+st.set_page_config(page_title="Dashboard Maricá", layout="wide")
 
 st.title("Acompanhamento Geral Maricá")
 
