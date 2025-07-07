@@ -29,7 +29,7 @@ st.image("logo-quanta-oficial.png", width=300)
 
 # ✅ Título estilizado com HTML
 st.markdown("""
-    <h1 style='color: white;'>Selecione um contrato</h1>
+    <h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>
 """, unsafe_allow_html=True)
 
 # ✅ Imagens das prefeituras lado a lado
@@ -45,9 +45,9 @@ st.markdown("##")
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("Contrato Macaé"):
+    if st.button("Assessoria e Projetos SEMED"):
         st.switch_page("pages/macae_dashboard.py")
 
 with col2:
-    if st.button("Contrato Maricá"):
+    if st.button("Assessoria Codemar"):
         st.switch_page("pages/marica_dashboard.py")
