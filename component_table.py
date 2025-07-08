@@ -45,7 +45,7 @@ def mostrar_tabela(df):
 
     # Colunas de progresso
     gb.configure_column("previsto",
-        header_name="% Previsto",
+        header_name="% Prev",
         cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,

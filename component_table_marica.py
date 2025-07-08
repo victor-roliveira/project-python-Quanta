@@ -37,6 +37,7 @@ def mostrar_tabela(df):
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
+    gb.configure_column("conclusao", header_name="Término",  cellStyle={"textAlign": "center"}, minWidth=100, maxWidth=150)
 
     gb.configure_column("previsto",
         header_name="% Previsto",
@@ -52,13 +53,33 @@ def mostrar_tabela(df):
         maxWidth=120,
         valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(2) + '%' }")
     )
-    gb.configure_column("barra_concluido",
-        header_name="Barra de %",
-        headerStyle={"textAlign": "center"},
-        cellStyle={"fontFamily": "monospace", "textAlign": "left"},
-        maxWidth=150, minWidth=150
+    # ✅ Renderer que usa innerHTML corretamente
+    barra_progress_renderer = JsCode("""
+    function(params) {
+        const value = params.value || 0;
+        let color = 'green';
+        if (value < 50) {
+            color = 'red';
+        } else if (value < 100) {
+            color = 'blue';
+        }
+        const width = Math.min(Math.max(value, 0), 100);
+
+        params.eGridCell.innerHTML = `
+            <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px;">
+                <div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div>
+            </div>
+        `;
+    }
+    """)
+    gb.configure_column(
+    "barra_concluido",
+    header_name="Barra de %",
+    cellRenderer=barra_progress_renderer,
+    maxWidth=160,
+    minWidth=160,
     )
-    gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
     gb.configure_column("responsavel 2", header_name="Recurso", cellStyle={"textAlign": "center"}, maxWidth=120)
 
     AgGrid(

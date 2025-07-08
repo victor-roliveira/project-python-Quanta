@@ -10,13 +10,13 @@ from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 df = pd.read_excel("013A.xlsx")
 
 df = df[[
-    "D - N° Guia", "E - Nome Da Tarefa",
+    "D - N° Guia", "E - Nome Da Tarefa", "H - Conclusão",
     "% Ideal", "C - % Concluída",
     "K - Responsável", "L - Recurso", "B - Status"
 ]].copy()
 
 df.columns = [
-    "hierarquia", "tarefa", "previsto", "concluido",
+    "hierarquia", "tarefa", "conclusao", "previsto", "concluido",
     "responsavel 1", "responsavel 2", "execucao"
 ]
 
@@ -24,6 +24,7 @@ df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
 df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
 df["barra_concluido"] = df["concluido"].apply(lambda val: "█" * int(float(val) * 20) + " " * (20 - int(float(val) * 20)))
+df["barra_concluido"] = (df["concluido"] * 100).round(0)
 
 # Reordenar colunas (opcional)
 colunas = list(df.columns)
