@@ -37,6 +37,21 @@ df = df[colunas]
 # =========================
 st.set_page_config(page_title="Dashboard Maricá", layout="wide")
 
+st.markdown("""
+    <style>
+        html, body, .stApp {
+            padding-top: 0px !important;
+            margin-top: 0px !important;
+        }
+
+        /* Opcional: reduz ainda mais o espaço do container principal */
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 0px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Acompanhamento Geral Maricá")
 
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])

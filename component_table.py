@@ -1,42 +1,21 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 def mostrar_tabela(df):
-    # ✅ Criar coluna com emoji de status
+    # Criar coluna com emoji de status
     df["tarefa_status"] = df.apply(
         lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
         axis=1
     )
 
-    # ✅ Corrigir tipo de hierarquia (str)
-    df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
-
-    # ✅ Criar coluna topico (apenas para exibição no agrupamento)
-    df["topico"] = df["hierarquia"]
-
-    # ✅ Criar caminho de hierarquia para árvore
-    df["hierarchy_path"] = df["hierarquia"].apply(lambda x: x.split("."))
-
-    # ✅ Ordenar corretamente pelos níveis hierárquicos
-    def hierarquia_sort_key(h):
-        try:
-            return [int(part) if part.isdigit() else part for part in h.split(".")]
-        except:
-            return [h]
-
-    df = df.sort_values(by="hierarquia", key=lambda col: col.map(hierarquia_sort_key))
-
-    # ✅ Reordenar colunas para colocar tarefa_status no lugar de 'tarefa'
+    # Reordenar a coluna para substituir visualmente 'tarefa'
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
     df = df[colunas]
 
-    # ✅ Remover coluna 'topico' do DataFrame (será usada apenas no agrupamento)
-    df = df.drop(columns=["topico"])
-
-    # ✅ Configuração do AgGrid
     gb = GridOptionsBuilder.from_dataframe(df)
 
+    # Habilitar estrutura em árvore
     gb.configure_grid_options(
         treeData=True,
         animateRows=True,
@@ -50,55 +29,82 @@ def mostrar_tabela(df):
                 "innerRenderer": JsCode("function(params) { return params.value; }")
             },
             "pinned": "left",
-            "minWidth": 100,
+            "minWidth": 30,
+            "maxWidth": 150,
             "cellStyle": {"textAlign": "center"}
         }
     )
 
-    # ✅ Ocultar colunas internas
+    # Ocultar colunas internas
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
 
-    # ✅ Coluna de tarefa com status visual
+    # Coluna visual da tarefa
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
+    
+    gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
 
+    # Colunas de progresso
     gb.configure_column("previsto",
         header_name="% Previsto",
+        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        cellStyle={"textAlign": "center"},
         valueFormatter=JsCode("function(params) { return (params.value).toFixed(0) + '%' }")
     )
-
     gb.configure_column("concluido",
         header_name="% Exe",
+        cellStyle={"textAlign": "center"},
         type=["numericColumn"],
         maxWidth=120,
-        cellStyle={"textAlign": "center"},
         valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
     )
 
-    gb.configure_column("barra_concluido",
-        header_name="Barra de %",
-        maxWidth=170, minWidth=170
+    # ✅ Renderer que usa innerHTML corretamente
+    barra_progress_renderer = JsCode("""
+    function(params) {
+        const value = params.value || 0;
+        let color = 'green';
+        if (value < 50) {
+            color = 'red';
+        } else if (value < 100) {
+            color = 'blue';
+        }
+        const width = Math.min(Math.max(value, 0), 100);
+
+        params.eGridCell.innerHTML = `
+            <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px;">
+                <div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div>
+            </div>
+        `;
+    }
+    """)
+
+    gb.configure_column(
+    "barra_concluido",
+    header_name="Barra de %",
+    cellRenderer=barra_progress_renderer,
+    maxWidth=160,
+    minWidth=160,
     )
 
-    gb.configure_column("responsavel 1", header_name="AT 1", maxWidth=120, cellStyle={"textAlign": "center"})
-    gb.configure_column("responsavel 2", header_name="AT 2", maxWidth=120, cellStyle={"textAlign": "center"})
-    gb.configure_column("nome dos recursos", header_name="Recurso", maxWidth=140, cellStyle={"textAlign": "center"})
+    # Outras colunas
+    gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
-    # ✅ Exibição final da tabela
     AgGrid(
         df,
         gridOptions=gb.build(),
-        height=800,
+        height=400,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
         custom_css={
             ".ag-cell": {
-                "font-size": "10px",
-                "font-weight": "800",
+                "font-size": "12px",
+                "font-weight": "600",
                 "line-height": "22px",
+                "font-family": "'Raleway', sans-serif"
             },
             ".ag-header-cell-text": {
                 "font-size": "14px"

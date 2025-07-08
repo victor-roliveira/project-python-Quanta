@@ -29,7 +29,8 @@ def mostrar_tabela(df):
             "innerRenderer": JsCode("function(params) { return params.value; }")
         },
         "pinned": "left",
-        "minWidth": 120,
+        "minWidth": 50,
+        "maxWidth": 160,
         "cellStyle": {"textAlign": "center"}
     }
     )
@@ -63,7 +64,7 @@ def mostrar_tabela(df):
     AgGrid(
         df,
         gridOptions=gb.build(),
-        height=800,
+        domLayout="autoHeight",
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
