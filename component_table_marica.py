@@ -20,7 +20,18 @@ def mostrar_tabela(df):
         treeData=True,
         animateRows=True,
         groupDefaultExpanded=0,
-        getDataPath=JsCode("function(data) { return data.hierarchy_path; }")
+        getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
+        autoGroupColumnDef={
+        "headerName": "Tópico",
+        "field": "hierarquia",
+        "cellRendererParams": {
+            "suppressCount": True,
+            "innerRenderer": JsCode("function(params) { return params.value; }")
+        },
+        "pinned": "left",
+        "minWidth": 120,
+        "cellStyle": {"textAlign": "center"}
+    }
     )
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
