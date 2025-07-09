@@ -66,11 +66,20 @@ def mostrar_tabela(df):
         const concluido = data.concluido || 0;
         const previsto = data.previsto || 0;
 
-        let color = '#35da00';
-        if (concluido < previsto / 2) {
-            color = 'red';
-        } else if (concluido < previsto) {
-            color = '#7f9bff';
+        // Se estiver 100%, exibir texto finalizado
+        if (concluido === 100) {
+            params.eGridCell.innerHTML = `
+                <div style="text-align: center; font-weight: bold; color: #32cb00;">
+                    Finalizado ✅
+                </div>
+            `;
+            return;
+        }
+
+        // Determinar a cor
+        let color = '#7f9bff';  // azul padrão
+        if (concluido < previsto) {
+            color = '#ff4d4d';  // vermelho
         }
 
         const width = Math.min(Math.max(concluido, 0), 100);
