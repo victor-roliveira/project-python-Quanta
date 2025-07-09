@@ -85,7 +85,7 @@ def mostrar_tabela(df):
         const width = Math.min(Math.max(concluido, 0), 100);
 
         params.eGridCell.innerHTML = `
-            <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px;">
+            <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px; margin-top: 5px;">
                 <div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div>
             </div>
         `;
