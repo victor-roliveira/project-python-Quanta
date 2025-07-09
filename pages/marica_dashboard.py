@@ -23,7 +23,7 @@ df.columns = [
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
 df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
-df["barra_concluido"] = df["concluido"].apply(lambda val: "█" * int(float(val) * 20) + " " * (20 - int(float(val) * 20)))
+#df["barra_concluido"] = df["concluido"].apply(lambda val: "█" * int(float(val) * 20) + " " * (20 - int(float(val) * 20)))
 df["barra_info"] = df.apply(lambda row: {
     "concluido": round(row["concluido"] * 100),
     "previsto": round(row["previsto"])
