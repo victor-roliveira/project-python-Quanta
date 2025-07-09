@@ -17,7 +17,7 @@ def mostrar_graficos_tarefas_atrasadas(df):
     contagem.columns = ["Área Técnica", "Tarefas Atrasadas"]
 
     st.markdown("---")
-    st.subheader("🚨 Tarefas Atrasadas por Área Técnica")
+    st.subheader("🚨 Atrasos por Área Técnica")
 
     fig = px.bar(
         contagem,

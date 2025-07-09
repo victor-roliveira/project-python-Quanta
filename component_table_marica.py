@@ -69,7 +69,7 @@ def mostrar_tabela(df):
         // Se estiver 100%, exibir texto finalizado
         if (concluido === 100) {
             params.eGridCell.innerHTML = `
-                <div style="text-align: center; font-weight: bold; color: #32cb00;">
+                <div style="text-align: center; font-weight: bold; color: #2ebe00;">
                     Finalizado ✅
                 </div>
             `;

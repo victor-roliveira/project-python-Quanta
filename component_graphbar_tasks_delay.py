@@ -3,7 +3,7 @@ import plotly.express as px
 import pandas as pd
 
 def mostrar_graficos_tarefas_atrasadas(df):
-    st.subheader("🚨 Projetos Atrasados por Área Técnica")
+    st.subheader("🚨 Atrasos por Área Técnica")
     
     df["execucao"] = pd.to_numeric(df["execucao"], errors="coerce").fillna(-1).astype(int)
     df["responsavel 1"] = df["responsavel 1"].fillna("").str.strip()

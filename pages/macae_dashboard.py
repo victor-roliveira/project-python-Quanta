@@ -74,7 +74,7 @@ with col2:
 # =========================
 # Abas de navegação
 # =========================
-aba_tabela, aba_comparativo, aba_atrasadas, aba_resumo = st.tabs(["📋 Tabela", "📊 Gráfico Comparativo", "🚨 Tarefas Atrasadas", "ℹ️ Avanço Geral"])
+aba_tabela, aba_comparativo, aba_atrasadas, aba_resumo = st.tabs(["📋 Tabela", "📊 Gráfico Comparativo", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"])
 
 with aba_tabela:
     df_tabela = df.drop(columns=["execucao"])
