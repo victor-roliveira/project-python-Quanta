@@ -56,14 +56,24 @@ def mostrar_tabela(df):
     # ✅ Renderer que usa innerHTML corretamente
     barra_progress_renderer = JsCode("""
     function(params) {
-        const value = params.value || 0;
-        let color = 'green';
-        if (value < 50) {
-            color = 'red';
-        } else if (value < 100) {
-            color = 'blue';
+        let data;
+        try {
+            data = JSON.parse(params.value);
+        } catch {
+            data = { concluido: 0, previsto: 0 };
         }
-        const width = Math.min(Math.max(value, 0), 100);
+
+        const concluido = data.concluido || 0;
+        const previsto = data.previsto || 0;
+
+        let color = '#35da00';
+        if (concluido < previsto / 2) {
+            color = 'red';
+        } else if (concluido < previsto) {
+            color = '#7f9bff';
+        }
+
+        const width = Math.min(Math.max(concluido, 0), 100);
 
         params.eGridCell.innerHTML = `
             <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px;">
@@ -72,16 +82,18 @@ def mostrar_tabela(df):
         `;
     }
     """)
+
     gb.configure_column(
-    "barra_concluido",
-    header_name="Barra de %",
-    cellRenderer=barra_progress_renderer,
-    maxWidth=160,
-    minWidth=160,
+        "barra_info",
+        header_name="Barra de %",
+        cellRenderer=barra_progress_renderer,
+        maxWidth=160,
+        minWidth=160,
     )
     gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
     gb.configure_column("responsavel 2", header_name="Recurso", cellStyle={"textAlign": "center"}, maxWidth=120)
 
+    gb.configure_columns(["barra_concluido"], hide=True)
     AgGrid(
         df,
         gridOptions=gb.build(),

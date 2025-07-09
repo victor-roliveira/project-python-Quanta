@@ -42,14 +42,18 @@ df.columns = [
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
 df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
-# Apenas o valor numérico percentual para a barra
-df["barra_concluido"] = (df["concluido"] * 100).round(0)
+
+# Criar string JSON-like com os dados necessários para a barra
+df["barra_info"] = df.apply(lambda row: {
+    "concluido": round(row["concluido"] * 100),
+    "previsto": round(row["previsto"])
+}, axis=1).apply(lambda x: str(x).replace("'", '"'))
 
 # ✅ Reordenar colunas
 colunas = list(df.columns)
 idx = colunas.index("concluido")
-colunas.remove("barra_concluido")
-colunas.insert(idx + 1, "barra_concluido")
+colunas.remove("barra_info")
+colunas.insert(idx + 1, "barra_info")
 df = df[colunas]
 
 # =========================
@@ -57,27 +61,26 @@ df = df[colunas]
 # =========================
 st.title("Acompanhamento Geral Macaé")
 
-col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
+col1, col2, col3 = st.columns([0.03, 0.03, 0.2])
 
 with col1:
     if st.button("Voltar ao Início"):
-        st.switch_page("dashboard.py") 
+        st.switch_page("dashboard.py")
 
 with col2:
     if st.button("Contrato Maricá"):
-        st.switch_page("pages/marica_dashboard.py") 
+        st.switch_page("pages/marica_dashboard.py")
 
 # =========================
 # Abas de navegação
 # =========================
-aba_tabela, aba_comparativo, aba_atrasadas = st.tabs(["📋 Tabela", "📊 Gráfico Comparativo", "🚨 Tarefas Atrasadas"])
+aba_tabela, aba_comparativo, aba_atrasadas, aba_resumo = st.tabs(["📋 Tabela", "📊 Gráfico Comparativo", "🚨 Tarefas Atrasadas", "ℹ️ Avanço Geral"])
 
 with aba_tabela:
     df_tabela = df.drop(columns=["execucao"])
     mostrar_tabela(df_tabela)
 
 with aba_comparativo:
-    # Preparar filtro hierárquico
     df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
@@ -96,3 +99,17 @@ with aba_comparativo:
 
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
+
+with aba_resumo:
+    st.markdown("""
+        <style>
+            .resumo-img {
+                height: 1200px;
+                width: 100%;
+                object-fit: cover;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h3 style='text-align: center;'>Resumo Geral de Avanço</h3>", unsafe_allow_html=True)
+    st.image("resumo_geral.png", use_container_width=True, output_format="PNG")

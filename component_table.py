@@ -1,13 +1,11 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 def mostrar_tabela(df):
-    # Criar coluna com emoji de status
     df["tarefa_status"] = df.apply(
         lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
         axis=1
     )
 
-    # Reordenar a coluna para substituir visualmente 'tarefa'
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
@@ -15,7 +13,6 @@ def mostrar_tabela(df):
 
     gb = GridOptionsBuilder.from_dataframe(df)
 
-    # Habilitar estrutura em árvore
     gb.configure_grid_options(
         treeData=True,
         animateRows=True,
@@ -35,15 +32,10 @@ def mostrar_tabela(df):
         }
     )
 
-    # Ocultar colunas internas
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
-
-    # Coluna visual da tarefa
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
-    
     gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
 
-    # Colunas de progresso
     gb.configure_column("previsto",
         header_name="% Prev",
         cellStyle={"textAlign": "center"},
@@ -59,17 +51,26 @@ def mostrar_tabela(df):
         valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
     )
 
-    # ✅ Renderer que usa innerHTML corretamente
     barra_progress_renderer = JsCode("""
     function(params) {
-        const value = params.value || 0;
-        let color = 'green';
-        if (value < 50) {
-            color = 'red';
-        } else if (value < 100) {
-            color = 'blue';
+        let data;
+        try {
+            data = JSON.parse(params.value);
+        } catch {
+            data = { concluido: 0, previsto: 0 };
         }
-        const width = Math.min(Math.max(value, 0), 100);
+
+        const concluido = data.concluido || 0;
+        const previsto = data.previsto || 0;
+
+        let color = '#35da00';  // verde por padrão
+        if (concluido < previsto / 2) {
+            color = 'red';
+        } else if (concluido < previsto) {
+            color = '#7f9bff';  // azul
+        }
+
+        const width = Math.min(Math.max(concluido, 0), 100);
 
         params.eGridCell.innerHTML = `
             <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px;">
@@ -80,14 +81,13 @@ def mostrar_tabela(df):
     """)
 
     gb.configure_column(
-    "barra_concluido",
-    header_name="Barra de %",
-    cellRenderer=barra_progress_renderer,
-    maxWidth=160,
-    minWidth=160,
+        "barra_info",
+        header_name="Barra de %",
+        cellRenderer=barra_progress_renderer,
+        maxWidth=160,
+        minWidth=160,
     )
 
-    # Outras colunas
     gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=120)
     gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=120)
     gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
