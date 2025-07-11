@@ -45,7 +45,8 @@ def mostrar_grafico(df, selecao_valor):
     fig.update_layout(
         yaxis=dict(range=[0, 100], tickformat=".0f", title="Percentual (%)"),
         xaxis_title="Tarefa",
-        legend_title=""
+        legend_title="",
+        bargap=0.6
     )
 
     fig.update_xaxes(tickangle=-45)
