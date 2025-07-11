@@ -35,53 +35,46 @@ def mostrar_tabela(df):
         },
         onRowGroupOpened=JsCode("""
             function(params) {
-                let node = params.node;
+                const expandPaths = [];
 
-                if (!node.expanded) {
-                    // Verifica se todos os nós estão colapsados
-                    let anyExpanded = false;
-                    params.api.forEachNode(function(n) {
-                        if (n.expanded) {
-                            anyExpanded = true;
-                        }
-                    });
-
-                    if (!anyExpanded) {
-                        window.expandPath = null;  // Limpa o caminho expandido
-                        params.api.redrawRows();   // Força a atualização das linhas
-                        return;
+                params.api.forEachNode(function(node) {
+                    if (node.expanded && node.data && node.data.hierarchy_path) {
+                        expandPaths.push(node.data.hierarchy_path);
                     }
-                }
+                });
 
-                if (node.data && node.expanded) {
-                    window.expandPath = node.data.hierarchy_path;
-                    params.api.redrawRows();
-                }
+                window.expandPaths = expandPaths;
+                params.api.redrawRows();
             }
         """),
         getRowStyle=JsCode("""
-            function(params) {
-                if (!window.expandPath || window.expandPath.length === 0) return {};
+        function(params) {
+            if (!window.expandPaths || window.expandPaths.length === 0) {
+                return {}; // Nenhum nó expandido => estilo normal
+            }
 
-                const itemPath = params.data.hierarchy_path;
-                let match = false;
+            const itemPath = params.data.hierarchy_path;
 
-                for (let i = 0; i < Math.min(window.expandPath.length, itemPath.length); i++) {
-                    if (itemPath[i] !== window.expandPath[i]) {
+            // Verifica se a linha está em algum caminho expandido (ou é filho)
+            for (let i = 0; i < window.expandPaths.length; i++) {
+                const path = window.expandPaths[i];
+                let match = true;
+
+                for (let j = 0; j < path.length; j++) {
+                    if (itemPath[j] !== path[j]) {
+                        match = false;
                         break;
-                    }
-                    if (i === window.expandPath.length - 1) {
-                        match = true;
                     }
                 }
 
                 if (match) {
                     return { opacity: 1.0 };
-                } else {
-                    return { opacity: 0.3 };
                 }
             }
-        """)
+
+            return { opacity: 0.3 };  // Fora de todos os ramos abertos
+        }
+    """)
     )
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
