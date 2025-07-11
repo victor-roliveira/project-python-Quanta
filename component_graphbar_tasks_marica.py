@@ -25,7 +25,7 @@ def mostrar_graficos_tarefas_atrasadas(df):
         y="Tarefas Atrasadas",
         text="Tarefas Atrasadas",
         color="Área Técnica",
-        height=500
+        height=400
     )
 
     fig.update_traces(textposition="outside")
@@ -33,7 +33,7 @@ def mostrar_graficos_tarefas_atrasadas(df):
         showlegend=False,
         yaxis_title="Quantidade de Tarefas",
         xaxis_title="Área Técnica",
-        yaxis=dict(range=[0, contagem["Tarefas Atrasadas"].max() + 20])
+        yaxis=dict(range=[0, contagem["Tarefas Atrasadas"].max() + 20]),
     )
 
     st.plotly_chart(fig, use_container_width=True)

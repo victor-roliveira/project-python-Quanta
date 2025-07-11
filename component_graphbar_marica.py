@@ -23,8 +23,7 @@ def mostrar_grafico(df, selecao_valor):
     if df_plot["concluido"].max() <= 1:
         df_plot["concluido"] *= 100
 
-    st.markdown("---")
-    st.subheader("📊 Comparativo de Tarefas")
+    st.subheader("Comparativo de Projetos")
 
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")

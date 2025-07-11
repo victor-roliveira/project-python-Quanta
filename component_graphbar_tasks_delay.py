@@ -25,9 +25,9 @@ def mostrar_graficos_tarefas_atrasadas(df):
         color="Área",
         text="Tarefas Atrasadas",
         labels={"Área": "Área Técnica", "Tarefas Atrasadas": "Qtde. de Tarefas Atrasadas"},
-        height=500, 
+        height=400, 
     )
 
     fig.update_traces(textposition="outside")
-    fig.update_layout(showlegend=False, xaxis_title="Área Técnica", yaxis_title="Quantidade")
+    fig.update_layout(showlegend=False, xaxis_title="Área Técnica", yaxis_title="Quantidade", bargap=0.6, margin=dict(t=10))
     st.plotly_chart(fig, use_container_width=True)

@@ -22,17 +22,66 @@ def mostrar_tabela(df):
         groupDefaultExpanded=0,
         getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
         autoGroupColumnDef={
-        "headerName": "Tópico",
-        "field": "hierarquia",
-        "cellRendererParams": {
-            "suppressCount": True,
-            "innerRenderer": JsCode("function(params) { return params.value; }")
+            "headerName": "Tópico",
+            "field": "hierarquia",
+            "cellRendererParams": {
+                "suppressCount": True,
+                "innerRenderer": JsCode("function(params) { return params.value; }")
+            },
+            "pinned": "left",
+            "minWidth": 60,
+            "maxWidth": 150,
+            "cellStyle": {"textAlign": "center"}
         },
-        "pinned": "left",
-        "minWidth": 50,
-        "maxWidth": 160,
-        "cellStyle": {"textAlign": "center"}
-    }
+        onRowGroupOpened=JsCode("""
+            function(params) {
+                let node = params.node;
+
+                if (!node.expanded) {
+                    // Verifica se todos os nós estão colapsados
+                    let anyExpanded = false;
+                    params.api.forEachNode(function(n) {
+                        if (n.expanded) {
+                            anyExpanded = true;
+                        }
+                    });
+
+                    if (!anyExpanded) {
+                        window.expandPath = null;  // Limpa o caminho expandido
+                        params.api.redrawRows();   // Força a atualização das linhas
+                        return;
+                    }
+                }
+
+                if (node.data && node.expanded) {
+                    window.expandPath = node.data.hierarchy_path;
+                    params.api.redrawRows();
+                }
+            }
+        """),
+        getRowStyle=JsCode("""
+            function(params) {
+                if (!window.expandPath || window.expandPath.length === 0) return {};
+
+                const itemPath = params.data.hierarchy_path;
+                let match = false;
+
+                for (let i = 0; i < Math.min(window.expandPath.length, itemPath.length); i++) {
+                    if (itemPath[i] !== window.expandPath[i]) {
+                        break;
+                    }
+                    if (i === window.expandPath.length - 1) {
+                        match = true;
+                    }
+                }
+
+                if (match) {
+                    return { opacity: 1.0 };
+                } else {
+                    return { opacity: 0.3 };
+                }
+            }
+        """)
     )
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
