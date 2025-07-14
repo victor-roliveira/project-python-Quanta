@@ -1,14 +1,14 @@
-# ✅ component_table.py (adaptado para Maricá)
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-def mostrar_tabela(df):
-    # Sinalizador visual de status
+def mostrar_tabela(df_original):
+    df = df_original.copy()
+
     df["tarefa_status"] = df.apply(
         lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
         axis=1
     )
 
-    # Reordenar a coluna para substituir visualmente 'tarefa'
+    # Reorganiza colunas para exibição
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
@@ -20,7 +20,18 @@ def mostrar_tabela(df):
         treeData=True,
         animateRows=True,
         groupDefaultExpanded=0,
+        rowSelection='single',
+        suppressRowClickSelection=False,
+        rowStyle={"cursor": "pointer"},
         getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
+        getRowClass=JsCode("""
+            function(params) {
+                if (params.node.isSelected()) {
+                    return 'selected-row';
+                }
+                return '';
+            }
+        """),
         autoGroupColumnDef={
             "headerName": "Tópico",
             "field": "hierarquia",
@@ -77,25 +88,26 @@ def mostrar_tabela(df):
     """)
     )
 
+    # Ocultar apenas visualmente
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
-    gb.configure_column("conclusao", header_name="Término",  cellStyle={"textAlign": "center"}, minWidth=100, maxWidth=150)
+    gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
 
     gb.configure_column("previsto",
-        header_name="% Previsto",
+        header_name="% Prev",
         cellStyle={"textAlign": "center"},
         type=["numericColumn"],
-        maxWidth=120,
-        valueFormatter=JsCode("function(params) { return (params.value).toFixed(2) + '%' }")
+        maxWidth=90,
+        valueFormatter=JsCode("function(params) { return (params.value).toFixed(0) + '%' }")
     )
     gb.configure_column("concluido",
         header_name="% Exe",
         cellStyle={"textAlign": "center"},
         type=["numericColumn"],
-        maxWidth=120,
-        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(2) + '%' }")
+        maxWidth=90,
+        valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
     )
-    # ✅ Renderer que usa innerHTML corretamente
+
     barra_progress_renderer = JsCode("""
     function(params) {
         let data;
@@ -108,7 +120,6 @@ def mostrar_tabela(df):
         const concluido = data.concluido || 0;
         const previsto = data.previsto || 0;
 
-        // Se estiver 100%, exibir texto finalizado
         if (concluido === 100) {
             params.eGridCell.innerHTML = `
                 <div style="text-align: center; font-weight: bold; color: #2ebe00; margin-top: 2px;">
@@ -118,10 +129,9 @@ def mostrar_tabela(df):
             return;
         }
 
-        // Determinar a cor
-        let color = '#7f9bff';  // azul padrão
+        let color = '#7f9bff';
         if (concluido < previsto) {
-            color = '#ff4d4d';  // vermelho
+            color = '#ff4d4d';
         }
 
         const width = Math.min(Math.max(concluido, 0), 100);
@@ -134,29 +144,28 @@ def mostrar_tabela(df):
     }
     """)
 
-    gb.configure_column(
-        "barra_info",
-        header_name="Barra de %",
-        cellRenderer=barra_progress_renderer,
-        maxWidth=160,
-        minWidth=160,
-    )
-    gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
-    gb.configure_column("responsavel 2", header_name="Recurso", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("barra_info", header_name="Barra de %", cellRenderer=barra_progress_renderer, maxWidth=160)
+    gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=80)
+    gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=80)
+    gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
-    gb.configure_columns(["barra_concluido"], hide=True)
-    AgGrid(
+    # Renderização da AgGrid
+    response = AgGrid(
         df,
         gridOptions=gb.build(),
-        domLayout="autoHeight",
         height=300,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
+        update_mode='SELECTION_CHANGED',
+        enable_row_selection=True,
+        selection_mode='single',
+        use_checkbox=False,
+        return_df=True,
         custom_css={
             ".ag-cell": {
                 "font-size": "12px",
-                "font-weight": "300",
+                "font-weight": "100",
                 "line-height": "22px",
                 "font-family": "'Raleway', sans-serif"
             },
@@ -167,5 +176,17 @@ def mostrar_tabela(df):
                 "justify-content": "center",
                 "align-items": "center"
             },
-        }
+            ".selected-row": {
+                "background-color": "#394867 !important",
+                "color": "white !important"
+            }
+        },
     )
+
+    # 🔁 Pegamos a linha diretamente do df_original, comparando com o índice
+    selected = response.selected_rows
+
+    if selected is not None and not selected.empty:
+        hierarquia = selected.iloc[0].get("hierarquia")
+        return hierarquia
+    return None
