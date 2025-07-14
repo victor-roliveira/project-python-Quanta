@@ -91,7 +91,8 @@ def mostrar_tabela(df_original):
     # Ocultar apenas visualmente
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
-    gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
+    gb.configure_column("conclusao", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=100)
+    #gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
 
     gb.configure_column("previsto",
         header_name="% Prev",
@@ -145,9 +146,9 @@ def mostrar_tabela(df_original):
     """)
 
     gb.configure_column("barra_info", header_name="Barra de %", cellRenderer=barra_progress_renderer, maxWidth=160)
-    gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=80)
-    gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=80)
-    gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
+    gb.configure_column("responsavel 1", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=140)
+    gb.configure_column("responsavel 2", header_name="AT", cellStyle={"textAlign": "center"}, maxWidth=80)
+    #gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
     # Renderização da AgGrid
     response = AgGrid(

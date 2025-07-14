@@ -131,7 +131,7 @@ def mostrar_tabela(df_original):
 
         let color = '#7f9bff';
         if (concluido < previsto) {
-            color = '#ff4d4d';
+            color = '#e13a16';
         }
 
         const width = Math.min(Math.max(concluido, 0), 100);

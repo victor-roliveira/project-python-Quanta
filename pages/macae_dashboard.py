@@ -87,7 +87,7 @@ with aba_tabela:
         st.session_state.mostrar_grafico = True
         st.session_state.scroll_to_graph = True
 
-    col1, col2, col3, _ = st.columns([0.15, 0.15, 0.15, 0.55])
+    col1, col2, col3, _ = st.columns([0.15, 0.15, 0.15, 0.70])
     with col1:
         st.button(
             "📊 Visualizar Gráfico",

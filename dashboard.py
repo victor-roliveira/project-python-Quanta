@@ -6,10 +6,10 @@ st.set_page_config(page_title="Início", layout="centered", initial_sidebar_stat
 st.markdown("""
 <style>
     .stApp {
-        background-color: #3c3c3b;
+        background-color: black;
         background-image: none;
     }
-
+        
     div.stButton > button {
         background-color: #FF5733;  
         color: white;               
