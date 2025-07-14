@@ -6,9 +6,6 @@ from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 import streamlit.components.v1 as components
 
-# =========================
-# Configurações de layout e estilo
-# =========================
 st.set_page_config(page_title="Dashboard Macaé", layout="wide")
 
 st.markdown("""
@@ -25,9 +22,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# Carregar dados
-# =========================
 df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
 df = df[[
@@ -56,29 +50,25 @@ colunas.remove("barra_info")
 colunas.insert(idx + 1, "barra_info")
 df = df[colunas]
 
-# =========================
-# Cabeçalho e navegação
-# =========================
 st.title("Acompanhamento Geral Macaé")
 
-# =========================
-# Abas de navegação
-# =========================
 aba_tabela, aba_atrasadas, aba_resumo = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"])
 
 with aba_tabela:
-    df_tabela = df.drop(columns=["execucao"])
-    linha_selecionada = mostrar_tabela(df_tabela)
-
-    df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
-    df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
-
     if "mostrar_grafico" not in st.session_state:
         st.session_state.mostrar_grafico = False
     if "scroll_to_graph" not in st.session_state:
         st.session_state.scroll_to_graph = False
     if "selecao_tabela" not in st.session_state:
         st.session_state.selecao_tabela = None
+    if "limpar_selecao_tabela" not in st.session_state:
+        st.session_state.limpar_selecao_tabela = False
+
+    limpar = st.session_state.limpar_selecao_tabela
+    linha_selecionada = mostrar_tabela(df.drop(columns=["execucao"]), limpar_selecao=limpar)
+
+    if limpar:
+        st.session_state.limpar_selecao_tabela = False
 
     if linha_selecionada:
         st.session_state.selecao_tabela = linha_selecionada
@@ -97,7 +87,7 @@ with aba_tabela:
         )
     with col2:
         st.button(
-            "🔽 Recolher Gráfico",
+            "🔼 Recolher Gráfico",
             key="btn_recolher",
             disabled=not st.session_state.mostrar_grafico,
             on_click=lambda: st.session_state.update({"mostrar_grafico": False})
@@ -105,6 +95,7 @@ with aba_tabela:
     with col3:
         if st.button("🔄 Limpar Filtro"):
             st.session_state.selecao_tabela = None
+            st.session_state.limpar_selecao_tabela = True
             st.success("Filtro limpo! Exibindo projetos principais.")
 
     st.markdown("")

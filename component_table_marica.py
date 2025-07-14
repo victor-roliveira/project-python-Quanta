@@ -1,6 +1,6 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-def mostrar_tabela(df_original):
+def mostrar_tabela(df_original, limpar_selecao=False):
     df = df_original.copy()
 
     df["tarefa_status"] = df.apply(
@@ -154,6 +154,7 @@ def mostrar_tabela(df_original):
     response = AgGrid(
         df,
         gridOptions=gb.build(),
+        key="tabela_resetada" if limpar_selecao else "tabela_principal",
         height=300,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,

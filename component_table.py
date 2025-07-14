@@ -1,6 +1,6 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-def mostrar_tabela(df_original):
+def mostrar_tabela(df_original, limpar_selecao=False):
     df = df_original.copy()
 
     df["tarefa_status"] = df.apply(
@@ -8,7 +8,6 @@ def mostrar_tabela(df_original):
         axis=1
     )
 
-    # Reorganiza colunas para exibição
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
@@ -61,12 +60,11 @@ def mostrar_tabela(df_original):
         getRowStyle=JsCode("""
         function(params) {
             if (!window.expandPaths || window.expandPaths.length === 0) {
-                return {}; // Nenhum nó expandido => estilo normal
+                return {}; 
             }
 
             const itemPath = params.data.hierarchy_path;
 
-            // Verifica se a linha está em algum caminho expandido (ou é filho)
             for (let i = 0; i < window.expandPaths.length; i++) {
                 const path = window.expandPaths[i];
                 let match = true;
@@ -83,16 +81,14 @@ def mostrar_tabela(df_original):
                 }
             }
 
-            return { opacity: 0.3 };  // Fora de todos os ramos abertos
+            return { opacity: 0.3 };
         }
     """)
     )
 
-    # Ocultar apenas visualmente
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=320, maxWidth=400)
     gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
-
     gb.configure_column("previsto",
         header_name="% Prev",
         cellStyle={"textAlign": "center"},
@@ -149,10 +145,10 @@ def mostrar_tabela(df_original):
     gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=80)
     gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
-    # Renderização da AgGrid
     response = AgGrid(
         df,
         gridOptions=gb.build(),
+        key="tabela_resetada" if limpar_selecao else "tabela_principal",
         height=300,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
@@ -183,7 +179,6 @@ def mostrar_tabela(df_original):
         },
     )
 
-    # 🔁 Pegamos a linha diretamente do df_original, comparando com o índice
     selected = response.selected_rows
 
     if selected is not None and not selected.empty:
