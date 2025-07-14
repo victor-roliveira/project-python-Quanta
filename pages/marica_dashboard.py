@@ -51,7 +51,7 @@ st.markdown("""
         /* Opcional: reduz ainda mais o espaço do container principal */
         .block-container {
             padding-top: 2rem !important;
-            padding-bottom: 20px !important;
+            padding-bottom: 5px !important;
         }
     </style>
 """, unsafe_allow_html=True)

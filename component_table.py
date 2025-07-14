@@ -81,7 +81,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
                 }
             }
 
-            return { opacity: 0.3 };
+            return { opacity: 0.2 };
         }
     """)
     )

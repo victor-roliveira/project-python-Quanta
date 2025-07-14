@@ -83,7 +83,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
                 }
             }
 
-            return { opacity: 0.3 };  // Fora de todos os ramos abertos
+            return { opacity: 0.2 };  // Fora de todos os ramos abertos
         }
     """)
     )

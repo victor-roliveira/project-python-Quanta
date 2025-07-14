@@ -17,7 +17,7 @@ st.markdown("""
 
         .block-container {
             padding-top: 20px !important;
-            padding-bottom: 20px !important;
+            padding-bottom: 5px !important;
         }
     </style>
 """, unsafe_allow_html=True)
