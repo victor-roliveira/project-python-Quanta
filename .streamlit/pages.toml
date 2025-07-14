@@ -1,0 +1,14 @@
+[[pages]]
+path = "dashboard.py"
+name = "Página Inicial"
+icon = "🏠"
+
+[[pages]]
+path = "pages/Macae_dashboard.py"
+name = "SEMED Macaé"
+icon = "📘"
+
+[[pages]]
+path = "pages/Marica_dashboard.py"
+name = "Codemar Maricá"
+icon = "📗"

@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Início", layout="centered")
+st.set_page_config(page_title="Início", layout="centered", initial_sidebar_state="collapsed")
 
 # ✅ CSS para fundo e botões
 st.markdown("""
