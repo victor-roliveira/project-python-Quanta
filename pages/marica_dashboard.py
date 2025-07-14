@@ -96,7 +96,7 @@ with aba_tabela:
         st.session_state.mostrar_grafico = True
         st.session_state.scroll_to_graph = True
 
-    col1, col2, col3, _ = st.columns([0.15, 0.15, 0.15, 0.70])
+    col1, col2, col3, _ = st.columns([0.16, 0.15, 0.15, 0.70])
     with col1:
         st.button(
             "📊 Visualizar Gráfico",
@@ -142,4 +142,4 @@ with aba_tabela:
             st.session_state.scroll_to_graph = False
 
 with aba_atrasadas:
-    mostrar_graficos_tarefas_atrasadas(df)
+    mostrar_graficos_tarefas_atrasadas(df) 
