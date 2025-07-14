@@ -90,7 +90,7 @@ def mostrar_tabela(df_original):
 
     # Ocultar apenas visualmente
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
-    gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
+    gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=350, maxWidth=520)
     gb.configure_column("conclusao", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=100)
     #gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
 
