@@ -32,7 +32,7 @@ df["barra_info"] = df.apply(lambda row: {
 # Reordenar colunas (opcional)
 colunas = list(df.columns)
 idx = colunas.index("concluido")
-colunas.remove("barra_info")
+colunas.remove("barra_info") 
 colunas.insert(idx + 1, "barra_info")
 df = df[colunas]
 

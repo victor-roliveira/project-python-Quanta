@@ -149,13 +149,14 @@ def mostrar_tabela(df):
         df,
         gridOptions=gb.build(),
         domLayout="autoHeight",
+        height=300,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
         custom_css={
             ".ag-cell": {
                 "font-size": "12px",
-                "font-weight": "600",
+                "font-weight": "300",
                 "line-height": "22px",
                 "font-family": "'Raleway', sans-serif"
             },

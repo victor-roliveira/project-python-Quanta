@@ -10,7 +10,7 @@ def mostrar_grafico(df, selecao_valor):
         # exibe apenas os tópicos de nível 1
         df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()
     else:
-        nivel_atual = selecao_valor.count(".") + 1
+        nivel_atual = str(selecao_valor).count(".") + 1
         prox_nivel  = nivel_atual + 1
         df_plot = df[
             (df["hierarquia"] == selecao_valor) |
@@ -28,11 +28,14 @@ def mostrar_grafico(df, selecao_valor):
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")
         return
+    
+    altura_por_item = 40
+    altura_total = max(600, len(df_plot) * altura_por_item)
 
     fig = px.bar(
         df_plot, x="tarefa", y=["previsto", "concluido"],
         labels={"value": "Percentual", "variable": "Tipo", "tarefa": "Tarefa"},
-        barmode="group", height=500,
+        barmode="group", height=altura_total,
         color_discrete_map={"previsto": "#f08224", "concluido": "#3c3c3b"}
     )
     fig.update_layout(

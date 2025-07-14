@@ -44,10 +44,10 @@ st.markdown("##")
 # ✅ Botões lado a lado
 col1, col2 = st.columns(2)
 
-with col1:
-    if st.button("Assessoria e Projetos SEMED"):
-        st.switch_page("pages/macae_dashboard.py")
+#with col1:
+    #if st.button("Assessoria e Projetos SEMED"):
+        #st.switch_page("pages/Macae_dashboard.py")
 
-with col2:
-    if st.button("Assessoria Codemar"):
-        st.switch_page("pages/marica_dashboard.py")
+#with col2:
+    #if st.button("Assessoria Codemar"):
+        #st.switch_page("pages/Marica_dashboard.py")

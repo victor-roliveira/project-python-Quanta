@@ -1,49 +1,64 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-def mostrar_tabela(df):
+def mostrar_tabela(df_original):
+    df = df_original.copy()
+
     df["tarefa_status"] = df.apply(
         lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
         axis=1
     )
 
+    # Reorganiza colunas para exibição
     colunas = list(df.columns)
     colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
     df = df[colunas]
 
     gb = GridOptionsBuilder.from_dataframe(df)
+
     gb.configure_grid_options(
-    treeData=True,
-    animateRows=True,
-    groupDefaultExpanded=0,
-    getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
-    autoGroupColumnDef={
-        "headerName": "Tópico",
-        "field": "hierarquia",
-        "cellRendererParams": {
-            "suppressCount": True,
-            "innerRenderer": JsCode("function(params) { return params.value; }")
-        },
-        "pinned": "left",
-        "minWidth": 60,
-        "maxWidth": 150,
-        "cellStyle": {"textAlign": "center"}
-    },
-    onRowGroupOpened=JsCode("""
-        function(params) {
-            const expandPaths = [];
-
-            params.api.forEachNode(function(node) {
-                if (node.expanded && node.data && node.data.hierarchy_path) {
-                    expandPaths.push(node.data.hierarchy_path);
+        treeData=True,
+        animateRows=True,
+        groupDefaultExpanded=0,
+        rowSelection='single',
+        suppressRowClickSelection=False,
+        rowStyle={"cursor": "pointer"},
+        getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
+        getRowClass=JsCode("""
+            function(params) {
+                if (params.node.isSelected()) {
+                    return 'selected-row';
                 }
-            });
+                return '';
+            }
+        """),
+        autoGroupColumnDef={
+            "headerName": "Tópico",
+            "field": "hierarquia",
+            "cellRendererParams": {
+                "suppressCount": True,
+                "innerRenderer": JsCode("function(params) { return params.value; }")
+            },
+            "pinned": "left",
+            "minWidth": 60,
+            "maxWidth": 150,
+            "cellStyle": {"textAlign": "center"}
+        },
+        onRowGroupOpened=JsCode("""
+            function(params) {
+                const expandPaths = [];
 
-            window.expandPaths = expandPaths;
-            params.api.redrawRows();
-        }
-    """),
-    getRowStyle=JsCode("""
+                params.api.forEachNode(function(node) {
+                    if (node.expanded && node.data && node.data.hierarchy_path) {
+                        expandPaths.push(node.data.hierarchy_path);
+                    }
+                });
+
+                window.expandPaths = expandPaths;
+                params.api.redrawRows();
+            }
+        """),
+        getRowStyle=JsCode("""
         function(params) {
             if (!window.expandPaths || window.expandPaths.length === 0) {
                 return {}; // Nenhum nó expandido => estilo normal
@@ -71,12 +86,13 @@ def mostrar_tabela(df):
             return { opacity: 0.3 };  // Fora de todos os ramos abertos
         }
     """)
-)
+    )
 
-
+    # Ocultar apenas visualmente
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=250, maxWidth=400)
     gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
+
     gb.configure_column("previsto",
         header_name="% Prev",
         cellStyle={"textAlign": "center"},
@@ -128,19 +144,13 @@ def mostrar_tabela(df):
     }
     """)
 
-    gb.configure_column(
-        "barra_info",
-        header_name="Barra de %",
-        cellRenderer=barra_progress_renderer,
-        maxWidth=160,
-        minWidth=160,
-    )
-
+    gb.configure_column("barra_info", header_name="Barra de %", cellRenderer=barra_progress_renderer, maxWidth=160)
     gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=80)
     gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=80)
     gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
-    grid_response = AgGrid(
+    # Renderização da AgGrid
+    response = AgGrid(
         df,
         gridOptions=gb.build(),
         height=300,
@@ -150,12 +160,12 @@ def mostrar_tabela(df):
         update_mode='SELECTION_CHANGED',
         enable_row_selection=True,
         selection_mode='single',
-        use_checkbox=False,  # <-- Clique direto na linha
+        use_checkbox=False,
         return_df=True,
         custom_css={
             ".ag-cell": {
                 "font-size": "12px",
-                "font-weight": "600",
+                "font-weight": "100",
                 "line-height": "22px",
                 "font-family": "'Raleway', sans-serif"
             },
@@ -166,7 +176,17 @@ def mostrar_tabela(df):
                 "justify-content": "center",
                 "align-items": "center"
             },
+            ".selected-row": {
+                "background-color": "#394867 !important",
+                "color": "white !important"
+            }
         },
     )
 
-    return grid_response['selected_rows']
+    # 🔁 Pegamos a linha diretamente do df_original, comparando com o índice
+    selected = response.selected_rows
+
+    if selected is not None and not selected.empty:
+        hierarquia = selected.iloc[0].get("hierarquia")
+        return hierarquia
+    return None

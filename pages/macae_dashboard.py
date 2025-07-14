@@ -73,28 +73,21 @@ with aba_tabela:
     df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
-    opcoes_filtro = ["Projetos Principais"]
-    tarefas_ordenadas = sorted(df["hierarquia"].unique(), key=lambda x: [int(p) if p.isdigit() else p for p in x.split(".")])
-
-    for h in tarefas_ordenadas:
-        tarefa_nome = df[df["hierarquia"] == h]["tarefa"].iloc[0]
-        indent = "  " * h.count(".")
-        opcoes_filtro.append(f"{indent}{h} - {tarefa_nome}")
-
     if "mostrar_grafico" not in st.session_state:
         st.session_state.mostrar_grafico = False
     if "scroll_to_graph" not in st.session_state:
         st.session_state.scroll_to_graph = False
+    if "selecao_tabela" not in st.session_state:
+        st.session_state.selecao_tabela = None
 
-    # Atualiza a seleção baseada na linha clicada na tabela
-    if linha_selecionada and "hierarquia" in linha_selecionada[0]:
-        st.session_state.selecao_tabela = linha_selecionada[0]["hierarquia"]
+    if linha_selecionada:
+        st.session_state.selecao_tabela = linha_selecionada
 
     def expandir_e_scrollar():
         st.session_state.mostrar_grafico = True
         st.session_state.scroll_to_graph = True
 
-    col1, col2, _ = st.columns([0.15, 0.15, 0.7])
+    col1, col2, col3, _ = st.columns([0.15, 0.15, 0.15, 0.55])
     with col1:
         st.button(
             "📊 Visualizar Gráfico",
@@ -109,33 +102,34 @@ with aba_tabela:
             disabled=not st.session_state.mostrar_grafico,
             on_click=lambda: st.session_state.update({"mostrar_grafico": False})
         )
+    with col3:
+        if st.button("🔄 Limpar Filtro"):
+            st.session_state.selecao_tabela = None
+            st.success("Filtro limpo! Exibindo projetos principais.")
 
     st.markdown("")
 
     if st.session_state.mostrar_grafico:
-            st.markdown('<div id="grafico-anchor"></div>', unsafe_allow_html=True)
+        st.markdown('<div id="grafico-anchor"></div>', unsafe_allow_html=True)
 
-            selecao = st.selectbox("Filtro de Projetos:", opcoes_filtro, index=0, key="grafico_filtro")
-            selecao_valor = st.session_state.get("selecao_tabela")
+        selecao_valor = st.session_state.get("selecao_tabela")
+        selecao_valor = selecao_valor if selecao_valor else "Todos"
 
-            if not selecao_valor or selecao == "Projetos Principais":
-                selecao_valor = selecao.strip().split(" ")[0] if selecao != "Projetos Principais" else "Todos"
+        mostrar_grafico(df, str(selecao_valor))
 
-            mostrar_grafico(df, selecao_valor)
-
-            if st.session_state.scroll_to_graph:
-                components.html(
-                    """
-                    <script>
-                        const anchor = window.parent.document.getElementById("grafico-anchor");
-                        if(anchor){
-                            anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }
-                    </script>
-                    """,
-                    height=0
-                )
-                st.session_state.scroll_to_graph = False
+        if st.session_state.scroll_to_graph:
+            components.html(
+                """
+                <script>
+                    const anchor = window.parent.document.getElementById("grafico-anchor");
+                    if(anchor){
+                        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                </script>
+                """,
+                height=0
+            )
+            st.session_state.scroll_to_graph = False
 
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
