@@ -7,4 +7,4 @@ sqlalchemy
 psycopg2-binary
 bcrypt
 python-dotenv
-streamlit-authenticator
+streamlit-authenticator==0.3.3
