@@ -1,53 +1,70 @@
 import streamlit as st
+from users import authenticate_user
 
 st.set_page_config(page_title="Início", layout="centered", initial_sidebar_state="collapsed")
 
-# ✅ CSS para fundo e botões
-st.markdown("""
-<style>
-    .stApp {
-        background-color: black;
-        background-image: none;
-    }
-        
-    div.stButton > button {
-        background-color: #FF5733;  
-        color: white;               
-        border-radius: 10px;
-        height: 3em;
-        font-weight: bold;
-    }
-    div.stButton > button:hover {
-        background-color: #C70039;
-        color: white;
-    }
-</style>
-""", unsafe_allow_html=True)
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-# ✅ Logomarca
-st.image("logo-quanta-oficial.png", width=300)
+if not st.session_state.authenticated:
+    st.title("Login")
 
-# ✅ Título estilizado com HTML
-st.markdown("""
-    <h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>
-""", unsafe_allow_html=True)
+    username = st.text_input("Email")
+    password = st.text_input("Senha", type="password")
 
-# ✅ Imagens das prefeituras lado a lado
-colimg1, colimg2 = st.columns(2)
-with colimg1:
-    st.image("prefeitura-macae.png", width=200)
-with colimg2:
-    st.image("prefeitura-maricá.png", width=200)
+    if st.button("Entrar"):
+        user_data = authenticate_user(username, password)
+        if user_data:
+            st.session_state.authenticated = True
+            st.session_state.username = user_data["username"]
+            st.session_state.role = user_data["role"]
+            st.rerun()
+        else:
+            st.error("Usuário ou senha incorretos.")
 
-st.markdown("##")
 
-# ✅ Botões lado a lado
-col1, col2 = st.columns(2)
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    hide_sidebar = """
+        <style>
+            [data-testid="stSidebar"] {
+                display: none;
+            }
+        </style>
+    """
+    st.markdown(hide_sidebar, unsafe_allow_html=True)
 
-#with col1:
-    #if st.button("Assessoria e Projetos SEMED"):
-        #st.switch_page("pages/Macae_dashboard.py")
+# Tela principal após login
+if st.session_state.authenticated:
+    # Exibe sidebar agora que está logado
+    st.sidebar.title("Bem-vindo")
+    st.sidebar.write(f"Usuário: {st.session_state.username}")
+    st.sidebar.write(f"Permissão: {st.session_state.role}")
 
-#with col2:
-    #if st.button("Assessoria Codemar"):
-        #st.switch_page("pages/Marica_dashboard.py")
+    if st.sidebar.button("Sair"):
+        st.session_state.authenticated = False
+        st.session_state.username = ""
+        st.session_state.role = ""
+        st.rerun()
+
+    # CSS e layout
+    st.markdown("""
+        <style>
+            .stApp {
+                background-color: black;
+                background-image: none;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.image("logo-quanta-oficial.png", width=300)
+    st.markdown("""
+        <h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>
+    """, unsafe_allow_html=True)
+
+    colimg1, colimg2 = st.columns(2)
+    with colimg1:
+        st.image("prefeitura-macae.png", width=200)
+    with colimg2:
+        st.image("prefeitura-maricá.png", width=200)
+
+    st.markdown("##")
