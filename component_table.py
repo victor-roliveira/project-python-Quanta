@@ -44,46 +44,46 @@ def mostrar_tabela(df_original, limpar_selecao=False):
             "cellStyle": {"textAlign": "center"}
         },
        onRowGroupOpened=JsCode("""
-        function(params) {
-            const api = params.api;
-            let expandedPaths = [];
+            function(params) {
+                const api = params.api;
+                let expandedPaths = [];
 
-            api.forEachNode(function(node) {
-                if (node.expanded && node.data && node.data.hierarchy_path) {
-                    expandedPaths.push(node.data.hierarchy_path);
-                }
-            });
-
-            if (expandedPaths.length === 0) {
-                window.activeBranchPath = null;
-            } else {
-                // Ordena pelos mais profundos
-                expandedPaths.sort(function(a, b) {
-                    return b.length - a.length;
+                api.forEachNode(function(node) {
+                    if (node.expanded && node.data && node.data.hierarchy_path) {
+                        expandedPaths.push(node.data.hierarchy_path);
+                    }
                 });
 
-                // Define o mais profundo como foco visual
-                window.activeBranchPath = expandedPaths[0];
-            }
+                if (expandedPaths.length === 0) {
+                    window.activeBranchPath = null;
+                } else {
+                    // Ordena pelos mais profundos
+                    expandedPaths.sort(function(a, b) {
+                        return b.length - a.length;
+                    });
 
-            api.redrawRows();
-        }
+                    // Define o mais profundo como foco visual
+                    window.activeBranchPath = expandedPaths[0];
+                }
+
+                api.redrawRows();
+            }
         """),
         getRowStyle=JsCode("""
-        function(params) {
-            const itemPath = params.data.hierarchy_path;
+            function(params) {
+                const itemPath = params.data.hierarchy_path;
 
-            if (!window.activeBranchPath || window.activeBranchPath.length === 0) {
-                return {};
+                if (!window.activeBranchPath || window.activeBranchPath.length === 0) {
+                    return {};
+                }
+
+                const path = window.activeBranchPath;
+
+                // Checa se item faz parte do ramo do caminho mais profundo
+                const isInBranch = path.every((val, idx) => itemPath[idx] === val);
+
+                return isInBranch ? { opacity: 1.0 } : { opacity: 0.3 };
             }
-
-            const path = window.activeBranchPath;
-
-            // Checa se item faz parte do ramo do caminho mais profundo
-            const isInBranch = path.every((val, idx) => itemPath[idx] === val);
-
-            return isInBranch ? { opacity: 1.0 } : { opacity: 0.3 };
-        }
         """)
     )
 
