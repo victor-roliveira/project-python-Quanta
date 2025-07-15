@@ -26,14 +26,29 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=7
 )
 
-name, authentication_status, username = authenticator.login("main", "Login")
+# --- Verificar autenticação ---
+if "authentication_status" not in st.session_state:
+    # Mostrar apenas o formulário de login, nada mais
+    name, authentication_status, username = authenticator.login("Login", "main")
+    
+    if authentication_status != True:
+        # Mostrar apenas imagem
+        st.image("acesso-negado.jpg", use_container_width=True)
+        st.stop()
 
-st.session_state['authentication_status'] = authentication_status
-st.session_state['name'] = name
-st.session_state['username'] = username
+    # Se autenticado, salvar dados na sessão
+    st.session_state.authentication_status = authentication_status
+    st.session_state.name = name
+    st.session_state.username = username
 
+# Recuperar dados da sessão
+authentication_status = st.session_state.get("authentication_status")
+name = st.session_state.get("name")
+username = st.session_state.get("username")
+
+# Verificar se realmente está autenticado
 if authentication_status != True:
-    st.error("Acesso não autorizado. Faça login primeiro.")
+    st.image("acesso-negado.jpg", use_container_width=True)
     st.stop()
 
 authenticator.logout("Sair", "sidebar")

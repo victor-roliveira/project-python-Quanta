@@ -9,7 +9,7 @@ load_dotenv()
 cookie_secret = os.getenv("KEY_COOKIE")
 
 # Configurar a página
-st.set_page_config(page_title="Início", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Início", layout="centered", initial_sidebar_state="collapsed")
 
 # Buscar usuários do banco
 credentials = get_all_users_for_auth()

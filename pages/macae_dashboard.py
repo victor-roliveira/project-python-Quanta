@@ -13,7 +13,7 @@ load_dotenv()
 
 cookie_secret = os.getenv("KEY_COOKIE")
 
-st.set_page_config(page_title="Dashboard Macaé", layout="wide")
+st.set_page_config(page_title="Dashboard Macaé", layout="centered")
 
 # --- Buscar credenciais do banco ---
 credentials = get_all_users_for_auth()
@@ -30,18 +30,29 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=7,
 )
 
-# --- Login ---
-# Exibe o formulário de login e obtém os valores
-name, authentication_status, username = authenticator.login("main", "Login")
+# --- Verificar autenticação ---
+if "authentication_status" not in st.session_state:
+    # Mostrar apenas o formulário de login, nada mais
+    name, authentication_status, username = authenticator.login("Login", "main")
+    
+    if authentication_status != True:
+        # Mostrar apenas imagem
+        st.image("acesso-negado.jpg", use_container_width=True)
+        st.stop()
 
-# Armazena os valores em session_state para persistência
-st.session_state['authentication_status'] = authentication_status
-st.session_state['name'] = name
-st.session_state['username'] = username
+    # Se autenticado, salvar dados na sessão
+    st.session_state.authentication_status = authentication_status
+    st.session_state.name = name
+    st.session_state.username = username
 
-# --- Proteger acesso ---
+# Recuperar dados da sessão
+authentication_status = st.session_state.get("authentication_status")
+name = st.session_state.get("name")
+username = st.session_state.get("username")
+
+# Verificar se realmente está autenticado
 if authentication_status != True:
-    st.error("🔒 Acesso não autorizado. Faça login primeiro.")
+    st.image("acesso-negado.jpg", use_container_width=True)
     st.stop()
 
 # Usuário autenticado
