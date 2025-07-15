@@ -3,3 +3,7 @@ pandas
 openpyxl
 plotly
 streamlit-aggrid
+sqlalchemy
+psycopg2-binary
+bcrypt
+python-dotenv
