@@ -39,7 +39,7 @@ authenticator = stauth.Authenticate(
 )
 
 # Login (sem o segundo parâmetro 'location', que foi removido nas versões mais recentes)
-name, authentication_status, username = authenticator.login("main")
+name, authentication_status, username = authenticator.login("main", "Login")
 
 # Verificar autenticação
 if authentication_status:
