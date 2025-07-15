@@ -73,6 +73,9 @@ with aba_tabela:
     if linha_selecionada:
         st.session_state.selecao_tabela = linha_selecionada
 
+    if linha_selecionada == 0:
+        st.session_state.selecao_tabela = None
+
     def expandir_e_scrollar():
         st.session_state.mostrar_grafico = True
         st.session_state.scroll_to_graph = True
