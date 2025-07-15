@@ -26,7 +26,7 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=7
 )
 
-name, authentication_status, username = authenticator.login("main")
+name, authentication_status, username = authenticator.login("main", "Login")
 
 st.session_state['authentication_status'] = authentication_status
 st.session_state['name'] = name

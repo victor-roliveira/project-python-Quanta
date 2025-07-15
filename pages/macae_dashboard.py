@@ -32,7 +32,7 @@ authenticator = stauth.Authenticate(
 
 # --- Login ---
 # Exibe o formulário de login e obtém os valores
-name, authentication_status, username = authenticator.login("main")
+name, authentication_status, username = authenticator.login("main", "Login")
 
 # Armazena os valores em session_state para persistência
 st.session_state['authentication_status'] = authentication_status
