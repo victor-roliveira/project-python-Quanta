@@ -82,7 +82,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
                 // Checa se item faz parte do ramo do caminho mais profundo
                 const isInBranch = path.every((val, idx) => itemPath[idx] === val);
 
-                return isInBranch ? { opacity: 1.0 } : { opacity: 0.3 };
+                return isInBranch ? { opacity: 1.0 } : { opacity: 0.1 };
             }
         """)
     )

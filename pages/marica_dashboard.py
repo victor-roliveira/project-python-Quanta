@@ -4,6 +4,43 @@ from component_table_marica import mostrar_tabela
 from component_graphbar_marica import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 import streamlit.components.v1 as components
+from users import get_all_users_for_auth
+from dotenv import load_dotenv
+import os
+import streamlit_authenticator as stauth
+
+load_dotenv()
+
+cookie_secret = os.getenv("KEY_COOKIE")
+
+credentials = get_all_users_for_auth()
+
+if credentials is None or len(credentials) == 0:
+    st.error("Erro ao carregar usuários para autenticação. Tente novamente mais tarde.")
+    st.stop()
+
+authenticator = stauth.Authenticate(
+    credentials={"usernames": credentials},
+    cookie_name="meu_login_cookie",
+    cookie_key=cookie_secret,
+    cookie_expiry_days=7
+)
+
+name, authentication_status, username = authenticator.login("main")
+
+st.session_state['authentication_status'] = authentication_status
+st.session_state['name'] = name
+st.session_state['username'] = username
+
+if authentication_status != True:
+    st.error("Acesso não autorizado. Faça login primeiro.")
+    st.stop()
+
+authenticator.logout("Sair", "sidebar")
+st.sidebar.success(f"👋 Bem-vindo(a), {name}")
+# Exibir permissão
+user_role = credentials[username]["role"]
+st.sidebar.info(f"🔐 Permissão: {user_role}")
 
 # =========================
 # Carregar dados

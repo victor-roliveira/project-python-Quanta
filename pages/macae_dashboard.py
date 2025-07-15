@@ -1,20 +1,64 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
+import streamlit_authenticator as stauth
+import streamlit.components.v1 as components
+from users import get_all_users_for_auth
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
-import streamlit.components.v1 as components
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+cookie_secret = os.getenv("KEY_COOKIE")
 
 st.set_page_config(page_title="Dashboard Macaé", layout="wide")
 
+# --- Buscar credenciais do banco ---
+credentials = get_all_users_for_auth()
+
+if credentials is None or len(credentials) == 0:
+    st.error("❌ Erro ao carregar usuários para autenticação. Tente novamente mais tarde.")
+    st.stop()
+
+# --- Configuração do authenticator ---
+authenticator = stauth.Authenticate(
+    credentials={"usernames": credentials},
+    cookie_name="meu_login_cookie",
+    cookie_key=cookie_secret, 
+    cookie_expiry_days=7,
+)
+
+# --- Login ---
+# Exibe o formulário de login e obtém os valores
+name, authentication_status, username = authenticator.login("main")
+
+# Armazena os valores em session_state para persistência
+st.session_state['authentication_status'] = authentication_status
+st.session_state['name'] = name
+st.session_state['username'] = username
+
+# --- Proteger acesso ---
+if authentication_status != True:
+    st.error("🔒 Acesso não autorizado. Faça login primeiro.")
+    st.stop()
+
+# Usuário autenticado
+authenticator.logout("Sair", "sidebar")
+st.sidebar.success(f"👋 Bem-vindo(a), {name}")
+
+# Exibir permissão
+user_role = credentials[username]["role"]
+st.sidebar.info(f"🔐 Permissão: {user_role}")
+
+# --- Estilos ---
 st.markdown("""
     <style>
         html, body, .stApp {
             padding-top: 0px !important;
             margin-top: 0px !important;
         }
-
         .block-container {
             padding-top: 20px !important;
             padding-bottom: 5px !important;
@@ -22,6 +66,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- Carregar dados ---
 df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
 df = df[[

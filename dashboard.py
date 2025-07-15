@@ -1,65 +1,58 @@
 import streamlit as st
-from users import authenticate_user
+import streamlit_authenticator as stauth
+from users import get_all_users_for_auth
+from dotenv import load_dotenv
+import os
 
-st.set_page_config(page_title="Início", layout="centered", initial_sidebar_state="collapsed")
+load_dotenv()
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+cookie_secret = os.getenv("KEY_COOKIE")
 
-if not st.session_state.authenticated:
-    st.title("Login")
+# Configurar a página
+st.set_page_config(page_title="Início", layout="wide", initial_sidebar_state="collapsed")
 
-    username = st.text_input("Email")
-    password = st.text_input("Senha", type="password")
+# Buscar usuários do banco
+credentials = get_all_users_for_auth()
 
-    if st.button("Entrar"):
-        user_data = authenticate_user(username, password)
-        if user_data:
-            st.session_state.authenticated = True
-            st.session_state.username = user_data["username"]
-            st.session_state.role = user_data["role"]
-            st.rerun()
-        else:
-            st.error("Usuário ou senha incorretos.")
+if credentials is None:
+    st.error("❌ Erro ao conectar ao banco. Tente novamente.")
+    st.stop()
 
+# Criar config dinâmico
+config = {
+    "credentials": {
+        "usernames": credentials
+    },
+    "cookie": {
+        "expiry_days": 7,
+        "key": cookie_secret,  # Altere para uma chave forte e secreta
+        "name": "meu_login_cookie"
+    }
+}
 
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    hide_sidebar = """
-        <style>
-            [data-testid="stSidebar"] {
-                display: none;
-            }
-        </style>
-    """
-    st.markdown(hide_sidebar, unsafe_allow_html=True)
+# Autenticação
+authenticator = stauth.Authenticate(
+    credentials=config["credentials"],
+    cookie_name=config["cookie"]["name"],
+    cookie_key=config["cookie"]["key"],
+    cookie_expiry_days=config["cookie"]["expiry_days"]
+)
 
-# Tela principal após login
-if st.session_state.authenticated:
-    # Exibe sidebar agora que está logado
-    st.sidebar.title("Bem-vindo")
-    st.sidebar.write(f"Usuário: {st.session_state.username}")
-    st.sidebar.write(f"Permissão: {st.session_state.role}")
+# Login (sem o segundo parâmetro 'location', que foi removido nas versões mais recentes)
+name, authentication_status, username = authenticator.login("main")
 
-    if st.sidebar.button("Sair"):
-        st.session_state.authenticated = False
-        st.session_state.username = ""
-        st.session_state.role = ""
-        st.rerun()
+# Verificar autenticação
+if authentication_status:
+    user_info = credentials[username]
+    role = user_info["role"]
 
-    # CSS e layout
-    st.markdown("""
-        <style>
-            .stApp {
-                background-color: black;
-                background-image: none;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    authenticator.logout("Sair","sidebar") 
+    st.sidebar.success(f"👋 Bem-vindo(a), {name}")
+    st.sidebar.info(f"🔐 Permissão: {role}")
 
+    # Conteúdo principal do dashboard
     st.image("logo-quanta-oficial.png", width=300)
-    st.markdown("""
-        <h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>
-    """, unsafe_allow_html=True)
+    st.markdown("<h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>", unsafe_allow_html=True)
 
     colimg1, colimg2 = st.columns(2)
     with colimg1:
@@ -68,3 +61,15 @@ if st.session_state.authenticated:
         st.image("prefeitura-maricá.png", width=200)
 
     st.markdown("##")
+
+    if role == "admin":
+        st.success("🔧 Acesso administrativo concedido.")
+        # Adicione aqui funcionalidades exclusivas para admin
+    else:
+        st.info("👤 Usuário comum - acesso limitado.")
+
+elif authentication_status is False:
+    st.error("Usuário ou senha incorretos.")
+
+elif authentication_status is None:
+    st.warning("Informe suas credenciais para continuar.")
