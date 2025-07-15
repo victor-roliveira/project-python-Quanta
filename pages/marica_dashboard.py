@@ -91,7 +91,7 @@ df = df[colunas]
 # =========================
 # Layout
 # =========================
-st.set_page_config(page_title="Dashboard Maricá", layout="wide")
+st.set_page_config(page_title="Dashboard Maricá", layout="centered")
 
 st.markdown("""
     <style>

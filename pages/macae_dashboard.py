@@ -13,7 +13,7 @@ load_dotenv()
 
 cookie_secret = os.getenv("KEY_COOKIE")
 
-st.set_page_config(page_title="Dashboard Macaé", layout="centered")
+st.set_page_config(page_title="Dashboard Macaé", layout="wide")
 
 # --- Buscar credenciais do banco ---
 credentials = get_all_users_for_auth()
