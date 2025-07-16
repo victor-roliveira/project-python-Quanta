@@ -43,7 +43,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
             "maxWidth": 150,
             "cellStyle": {"textAlign": "center"}
         },
-       onRowGroupOpened=JsCode("""
+        onRowGroupOpened=JsCode("""
             function(params) {
                 const api = params.api;
                 let expandedPaths = [];
@@ -150,7 +150,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         df,
         gridOptions=gb.build(),
         key="tabela_resetada" if limpar_selecao else "tabela_principal",
-        height=300,
+        height=238,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,

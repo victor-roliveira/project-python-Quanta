@@ -29,18 +29,29 @@ def mostrar_grafico(df, selecao_valor):
         st.info("Nenhum subtópico encontrado para este item.")
         return
     
-    altura_por_item = 40
-    altura_total = max(600, len(df_plot) * altura_por_item)
+    altura_por_item = 10
+    altura_total = max(350, len(df_plot) * altura_por_item)
+
+    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
 
     fig = px.bar(
-        df_plot, x="tarefa", y=["previsto", "concluido"],
-        labels={"value": "Percentual", "variable": "Tipo", "tarefa": "Tarefa"},
+        df_plot, x="tarefa_curta", y=["previsto", "concluido"],
+        labels={"value": "Percentual", "variable": "Tipo"},
+        hover_data={"tarefa": True, "tarefa_curta": False},
         barmode="group", height=altura_total,
         color_discrete_map={"previsto": "#f08224", "concluido": "#3c3c3b"}
     )
     fig.update_layout(
         yaxis=dict(range=[0,100], tickformat=".0f", title="Percentual (%)"),
-        xaxis_title="Tarefa", legend_title="", bargap=0.6
+        xaxis_title="Tarefa", legend_title="", bargap=0.8
     )
-    fig.update_xaxes(tickangle=-45)
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_xaxes(tickangle=0, tickfont=dict(size=11))
+
+    with st.container():
+        st.markdown("""
+            <div style="padding: 2px;">
+        """, unsafe_allow_html=True)
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)

@@ -46,46 +46,46 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         },
         onRowGroupOpened=JsCode("""
             function(params) {
-                const expandPaths = [];
+                const api = params.api;
+                let expandedPaths = [];
 
-                params.api.forEachNode(function(node) {
+                api.forEachNode(function(node) {
                     if (node.expanded && node.data && node.data.hierarchy_path) {
-                        expandPaths.push(node.data.hierarchy_path);
+                        expandedPaths.push(node.data.hierarchy_path);
                     }
                 });
 
-                window.expandPaths = expandPaths;
-                params.api.redrawRows();
+                if (expandedPaths.length === 0) {
+                    window.activeBranchPath = null;
+                } else {
+                    // Ordena pelos mais profundos
+                    expandedPaths.sort(function(a, b) {
+                        return b.length - a.length;
+                    });
+
+                    // Define o mais profundo como foco visual
+                    window.activeBranchPath = expandedPaths[0];
+                }
+
+                api.redrawRows();
             }
         """),
         getRowStyle=JsCode("""
-        function(params) {
-            if (!window.expandPaths || window.expandPaths.length === 0) {
-                return {}; // Nenhum nó expandido => estilo normal
-            }
+            function(params) {
+                const itemPath = params.data.hierarchy_path;
 
-            const itemPath = params.data.hierarchy_path;
-
-            // Verifica se a linha está em algum caminho expandido (ou é filho)
-            for (let i = 0; i < window.expandPaths.length; i++) {
-                const path = window.expandPaths[i];
-                let match = true;
-
-                for (let j = 0; j < path.length; j++) {
-                    if (itemPath[j] !== path[j]) {
-                        match = false;
-                        break;
-                    }
+                if (!window.activeBranchPath || window.activeBranchPath.length === 0) {
+                    return {};
                 }
 
-                if (match) {
-                    return { opacity: 1.0 };
-                }
-            }
+                const path = window.activeBranchPath;
 
-            return { opacity: 0.2 };  // Fora de todos os ramos abertos
-        }
-    """)
+                // Checa se item faz parte do ramo do caminho mais profundo
+                const isInBranch = path.every((val, idx) => itemPath[idx] === val);
+
+                return isInBranch ? { opacity: 1.0 } : { opacity: 0.1 };
+            }
+        """)
     )
 
     # Ocultar apenas visualmente
@@ -155,7 +155,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         df,
         gridOptions=gb.build(),
         key="tabela_resetada" if limpar_selecao else "tabela_principal",
-        height=300,
+        height=238,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,

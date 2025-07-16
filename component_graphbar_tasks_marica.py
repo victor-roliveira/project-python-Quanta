@@ -36,4 +36,6 @@ def mostrar_graficos_tarefas_atrasadas(df):
         yaxis=dict(range=[0, contagem["Tarefas Atrasadas"].max() + 20]),
     )
 
+    fig.update_xaxes(tickangle=0, tickfont=dict(size=11))
+
     st.plotly_chart(fig, use_container_width=True)
