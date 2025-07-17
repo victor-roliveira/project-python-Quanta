@@ -48,8 +48,6 @@ def login_user():
     if auth_status:
         with st.sidebar:
             authenticator.logout("Sair", "sidebar")
-            # Aplica estilo ao botão de logout
-            # Estilo para aumentar o botão "Sair"
             st.markdown("""
             <style>
             button[data-testid="stBaseButton-secondary"] div p {
@@ -57,7 +55,7 @@ def login_user():
             }
 
             button[data-testid="stBaseButton-secondary"] {
-                padding: 5px 20px  !important;
+                padding: 5px 20px !important;
                 background-color: #f63366 !important;
                 color: white !important;
                 border-radius: 8px !important;
@@ -75,6 +73,7 @@ def login_user():
             "name": name,
             "role": credentials[username]["role"]
         }
+
     if st.session_state.get("logout"):
         st.session_state.authentication_status = None
         st.session_state.username = None
@@ -90,7 +89,29 @@ def check_authentication_only():
         or "username" not in st.session_state
         or "name" not in st.session_state
     ):
-        st.image("acesso-negado.jpg", use_container_width=True)
+        # Substituição da imagem por uma estrutura de alerta com botão
+        st.markdown("""
+        <div style='text-align: center; font-size: 60px;'>⚠️</div>
+        <div style='text-align: center; font-size: 20px; margin-top: 10px;'>
+            <strong>Alguma coisa deu errado</strong><br>
+            Você não está logado ou não tem permissão para acessar essa página.
+        </div>
+        <div style='display: flex; justify-content: center; margin-top: 30px;'>
+            <a href="/" target="_self">
+                <button style='
+                    padding: 10px 25px;
+                    font-size: 18px;
+                    background-color: #f63366;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                '>
+                    Fazer login
+                </button>
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
 
     username = st.session_state["username"]
@@ -100,21 +121,21 @@ def check_authentication_only():
     with st.sidebar:
         authenticator.logout("Sair", "sidebar")
         st.markdown("""
-            <style>
-            button[data-testid="stBaseButton-secondary"] div p {
-                font-size: 20px !important;
-            }
+        <style>
+        button[data-testid="stBaseButton-secondary"] div p {
+            font-size: 20px !important;
+        }
 
-            button[data-testid="stBaseButton-secondary"] {
-                padding: 5px 20px !important;
-                background-color: #f63366 !important;
-                color: white !important;
-                border-radius: 8px !important;
-                border: none !important;
-                width: 218px;
-            }
-            </style>
-            """, unsafe_allow_html=True)
+        button[data-testid="stBaseButton-secondary"] {
+            padding: 5px 20px !important;
+            background-color: #f63366 !important;
+            color: white !important;
+            border-radius: 8px !important;
+            border: none !important;
+            width: 218px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         st.success(f"Bem-vindo(a), {name}")
         st.info(f"Permissão: {role}")
 
@@ -124,5 +145,3 @@ def check_authentication_only():
         "name": name,
         "role": role
     }
-
-
