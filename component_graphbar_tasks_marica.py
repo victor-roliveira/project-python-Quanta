@@ -3,7 +3,7 @@ import plotly.express as px
 import pandas as pd
 
 def mostrar_graficos_tarefas_atrasadas(df):
-    df_atrasadas = df[df["execucao"] == 1]  # 1 representa tarefas atrasadas
+    df_atrasadas = df[df["execucao"] == 2]  
 
     # Unir responsáveis em uma única lista
     responsaveis = df_atrasadas[["responsavel 1", "responsavel 2"]].fillna("")
@@ -16,7 +16,6 @@ def mostrar_graficos_tarefas_atrasadas(df):
     contagem = todas_areas[todas_areas != ""].value_counts().reset_index()
     contagem.columns = ["Área Técnica", "Tarefas Atrasadas"]
 
-    st.markdown("---")
     st.subheader("🚨 Atrasos por Área Técnica")
 
     fig = px.bar(
@@ -36,6 +35,6 @@ def mostrar_graficos_tarefas_atrasadas(df):
         yaxis=dict(range=[0, contagem["Tarefas Atrasadas"].max() + 20]),
     )
 
-    fig.update_xaxes(tickangle=0, tickfont=dict(size=11))
+    fig.update_xaxes(tickangle=0, tickfont=dict(size=10))
 
     st.plotly_chart(fig, use_container_width=True)

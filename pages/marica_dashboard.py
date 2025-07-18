@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from component_table_marica import mostrar_tabela
 from component_graphbar_marica import mostrar_grafico
-from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
+from component_graphbar_tasks_marica import mostrar_graficos_tarefas_atrasadas
 import streamlit.components.v1 as components
 from auth_session import check_authentication_only
 

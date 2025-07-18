@@ -9,7 +9,6 @@ st.set_page_config(page_title="Dashboard Macaé", layout="wide")
 
 # --- Autenticação centralizada ---
 session_data = check_authentication_only()
-
 # --- Estilos ---
 st.markdown("""
     <style>
@@ -23,7 +22,6 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-
 # --- Carregar dados ---
 df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
@@ -37,7 +35,6 @@ df.columns = [
     "hierarquia", "tarefa", "termino", "previsto", "concluido",
     "responsavel 1", "responsavel 2", "nome dos recursos", "execucao"
 ]
-
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
 df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
 df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
