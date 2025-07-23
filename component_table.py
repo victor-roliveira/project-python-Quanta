@@ -1,19 +1,39 @@
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+import pandas as pd
+import streamlit as st
 
-def mostrar_tabela(df_original, limpar_selecao=False):
+# Função para preparar os dados para a tabela, com cache
+@st.cache_data
+def preparar_dados_tabela(df_original):
     df = df_original.copy()
 
+    # Operação de string para 'tarefa_status'
     df["tarefa_status"] = df.apply(
         lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
         axis=1
     )
 
+    # Reordenação de colunas
     colunas = list(df.columns)
-    colunas.remove("tarefa_status")
+    if "tarefa_status" in colunas:
+        colunas.remove("tarefa_status")
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
     df = df[colunas]
 
-    gb = GridOptionsBuilder.from_dataframe(df)
+    # Prepara a coluna para a barra de progresso como string JSON
+    df['barra_info_data'] = df.apply(
+        lambda row: {'concluido': round(row['concluido'] * 100), 'previsto': round(row['previsto'])},
+        axis=1
+    ).apply(lambda x: str(x).replace("'", '"'))
+
+    return df
+
+# O restante da função mostrar_tabela permanece como antes
+def mostrar_tabela(df_original, limpar_selecao=False):
+    # Utilize a função cacheada para preparar os dados
+    df_preparado = preparar_dados_tabela(df_original)
+
+    gb = GridOptionsBuilder.from_dataframe(df_preparado)
 
     gb.configure_grid_options(
         treeData=True,
@@ -97,7 +117,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         maxWidth=90,
         valueFormatter=JsCode("function(params) { return (params.value).toFixed(0) + '%' }")
     )
-    gb.configure_column("concluido",
+    gb.configure_column("concluido", # Esta é a coluna "% Exe"
         header_name="% Exe",
         cellStyle={"textAlign": "center"},
         type=["numericColumn"],
@@ -105,6 +125,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         valueFormatter=JsCode("function(params) { return (params.value * 100).toFixed(0) + '%' }")
     )
 
+    # MOVA ESTE BLOCO PARA AQUI, IMEDIATAMENTE APÓS 'concluido'
     barra_progress_renderer = JsCode("""
     function(params) {
         let data;
@@ -141,13 +162,13 @@ def mostrar_tabela(df_original, limpar_selecao=False):
     }
     """)
 
-    gb.configure_column("barra_info", header_name="Barra de %", cellRenderer=barra_progress_renderer, maxWidth=160)
+    gb.configure_column("barra_info_data", header_name="Barra de %", cellRenderer=barra_progress_renderer, maxWidth=160)
     gb.configure_column("responsavel 1", header_name="AT 1", cellStyle={"textAlign": "center"}, maxWidth=80)
     gb.configure_column("responsavel 2", header_name="AT 2", cellStyle={"textAlign": "center"}, maxWidth=80)
     gb.configure_column("nome dos recursos", header_name="Responsável", cellStyle={"textAlign": "center"}, maxWidth=150)
 
     response = AgGrid(
-        df,
+        df_preparado,
         gridOptions=gb.build(),
         key="tabela_resetada" if limpar_selecao else "tabela_principal",
         height=238,
