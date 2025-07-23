@@ -1,15 +1,13 @@
 import streamlit as st
 import plotly.express as px
-import pandas as pd
 
-# Remove o hash_funcs, pois o DataFrame de entrada já é cacheado na função principal
-@st.cache_data
-def preparar_dados_grafico(df_original, selecao_valor):
-    df = df_original.copy()
+def mostrar_grafico(df, selecao_valor):
+    df = df.copy()
     df["hierarquia"] = df["hierarquia"].astype(str).str.strip()
     df["nivel"] = df["hierarquia"].apply(lambda x: x.count(".") + 1)
 
     if selecao_valor == "Todos":
+        # exibe apenas os tópicos de nível 1
         df_plot = df[df["hierarquia"].str.count(r"\.") == 0].copy()
     else:
         nivel_atual = str(selecao_valor).count(".") + 1
@@ -26,19 +24,15 @@ def preparar_dados_grafico(df_original, selecao_valor):
     if df_plot["concluido"].max() <= 1:
         df_plot["concluido"] *= 100
 
-    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
-    return df_plot
-
-def mostrar_grafico(df, selecao_valor):
-    df_plot = preparar_dados_grafico(df, selecao_valor) # Use a função cacheada
-
     st.subheader("Comparativo de Projetos")
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")
         return
-
+    
     altura_por_item = 10
     altura_total = max(350, len(df_plot) * altura_por_item)
+
+    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
 
     fig = px.bar(
         df_plot, x="tarefa_curta", y=["previsto", "concluido"],

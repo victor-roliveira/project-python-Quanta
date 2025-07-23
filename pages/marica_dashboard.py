@@ -8,9 +8,7 @@ from auth_session import check_authentication_only
 
 session_data = check_authentication_only()
 
-# =========================
 # Carregar dados
-# =========================
 df = pd.read_excel("013A.xlsx")
 
 df = df[[
@@ -62,17 +60,7 @@ st.title("Acompanhamento Geral Maricá")
 
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
 
-#with col1:
- #   if st.button("Voltar ao Início"):
- #       st.switch_page("dashboard.py") 
-
-#with col2:
-   # if st.button("Contrato Macaé"):
-    #    st.switch_page("pages/macae_dashboard.py") 
-
-# =========================
 # Abas de navegação
-# =========================
 aba_tabela, aba_atrasadas = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área"])
 
 with aba_tabela:
