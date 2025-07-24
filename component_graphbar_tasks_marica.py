@@ -3,38 +3,72 @@ import plotly.express as px
 import pandas as pd
 
 def mostrar_graficos_tarefas_atrasadas(df):
-    df_atrasadas = df[df["execucao"] == 2]  
+    st.subheader("🚨 Atrasos e Conclusões por Área Técnica")
 
-    # Unir responsáveis em uma única lista
-    responsaveis = df_atrasadas[["responsavel 1", "responsavel 2"]].fillna("")
+    df["execucao"] = pd.to_numeric(df["execucao"], errors="coerce").fillna(-1).astype(int)
+    df["responsavel 1"] = df["responsavel 1"].fillna("").str.strip()
+    df["responsavel 2"] = df["responsavel 2"].fillna("").str.strip()
 
-    todas_areas = pd.concat([
-        responsaveis["responsavel 1"],
-        responsaveis["responsavel 2"]
-    ], axis=0).reset_index(drop=True)
+    df_atrasadas = df[df["execucao"] == 2]
+    areas_atrasadas = pd.concat([
+        df_atrasadas[["responsavel 1"]].rename(columns={"responsavel 1": "Área"}),
+        df_atrasadas[["responsavel 2"]].rename(columns={"responsavel 2": "Área"})
+    ])  
 
-    contagem = todas_areas[todas_areas != ""].value_counts().reset_index()
-    contagem.columns = ["Área Técnica", "Tarefas Atrasadas"]
+    contagem_atrasadas = areas_atrasadas[areas_atrasadas["Área"] != ""].value_counts().reset_index(name="Quantidade")
+    contagem_atrasadas["Status"] = "Atrasadas"
 
-    st.subheader("🚨 Atrasos por Área Técnica")
+    df_concluidas = df[df["execucao"] == 0]
+    areas_concluidas = pd.concat([
+        df_concluidas[["responsavel 1"]].rename(columns={"responsavel 1": "Área"}),
+        df_concluidas[["responsavel 2"]].rename(columns={"responsavel 2": "Área"})
+    ])
+
+    contagem_concluidas = areas_concluidas[areas_concluidas["Área"] != ""].value_counts().reset_index(name="Quantidade")
+    contagem_concluidas["Status"] = "Concluídas"
+
+    df_comparativo = pd.concat([contagem_atrasadas, contagem_concluidas])
+
+    area_abbreviations = {
+        "ENG": "ENG",
+        "Alexandre": "Ale",
+        "Alan / Leo": "Alan/L",
+        "Alexandre / Abel": "Ale/A",
+        "Alexandre / Bruno": "Ale/B",
+        "ARQ": "ARQ",
+        "Maíra/Jairo": "Mai/J",
+        "Alexandre / Marcel": "Ale/M",
+        "Alexandre / Thaty": "Ale/T",
+        "ECO": "ECO",
+        "Glauce": "Glau",
+        "Guilherme": "Gui",
+        "Alan / Lucas": "Alan/L",
+        "Alexandre / Vanessa": "Ale/V",
+        "Alexandre /Thaty": "Ale/T"
+    }
 
     fig = px.bar(
-        contagem,
-        x="Área Técnica",
-        y="Tarefas Atrasadas",
-        text="Tarefas Atrasadas",
-        color="Área Técnica",
-        height=400
+        df_comparativo,
+        x="Área",
+        y="Quantidade",
+        color="Status",
+        barmode="group",
+        text="Quantidade",
+        labels={"Área": "Área Técnica", "Quantidade": "Qtd.de Tarefas"},
+        height=400,
+        color_discrete_map={
+            "Atrasadas": "#FF0000",
+            "Concluídas": "#109100"
+        }
     )
 
     fig.update_traces(textposition="outside")
     fig.update_layout(
-        showlegend=False,
-        yaxis_title="Quantidade de Tarefas",
         xaxis_title="Área Técnica",
-        yaxis=dict(range=[0, contagem["Tarefas Atrasadas"].max() + 20]),
+        yaxis_title="Quantidade",
+        bargap=0.2,
+        margin=dict(t=10),
+        legend_title_text="Status da Tarefa",
     )
-
-    fig.update_xaxes(tickangle=0, tickfont=dict(size=10))
 
     st.plotly_chart(fig, use_container_width=True)

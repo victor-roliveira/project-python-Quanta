@@ -6,10 +6,10 @@ if not session_data:
     st.stop()
 
 # Configurar a página
-st.set_page_config(page_title="Início", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Início", page_icon="icone-quanta.png", layout="centered")
 
 # Conteúdo principal do dashboard
-st.image("logo-quanta-oficial.png", width=300)
+st.logo("logo-quanta-oficial.png", size="large")
 st.markdown("<h1 style='color: white;'>Contratos - 25/2024-SEMINF</h1>", unsafe_allow_html=True)
 
 colimg1, colimg2 = st.columns(2)
@@ -19,7 +19,9 @@ with colimg1:
 with colimg2:
     st.image("prefeitura-maricá.png", width=200)
 
-st.markdown("##")
+st.divider()
 
 if session_data["role"] == "admin":
-    st.success("🔧 Acesso administrativo")
+    st.markdown(
+    ":orange[:material/crown: Acesso como Administrador]"
+)

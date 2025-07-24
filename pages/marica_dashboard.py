@@ -39,7 +39,8 @@ df = df[colunas]
 # =========================
 # Layout
 # =========================
-st.set_page_config(page_title="Dashboard Maricá", layout="wide")
+st.set_page_config(page_title="Dashboard Maricá", page_icon="icone-quanta.png",layout="wide")
+st.logo("logo-quanta-oficial.png", size="large")
 
 st.markdown("""
     <style>

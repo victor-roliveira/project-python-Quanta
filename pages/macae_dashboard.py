@@ -5,7 +5,8 @@ from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 from auth_session import check_authentication_only
 
-st.set_page_config(page_title="Dashboard Macaé", layout="wide")
+st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png",layout="wide")
+st.logo("logo-quanta-oficial.png", size="large")
 
 # --- Autenticação centralizada ---
 session_data = check_authentication_only()

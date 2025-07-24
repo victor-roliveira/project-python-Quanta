@@ -7,10 +7,44 @@ import os
 load_dotenv()
 cookie_secret = os.getenv("KEY_COOKIE")
 
+@st.cache_data(ttl=3600)
+def get_credentials_cached():
+    try:
+        credentials = get_all_users_for_auth()
+        if not credentials:
+            st.error("Erro: nenhuma credencial encontrada.")
+            st.markdown("""
+            <div style='text-align: center; font-size: 60px;'>⚠️</div>
+            <div style='text-align: center; font-size: 20px; margin-top: 10px;'>
+                <strong>Alguma coisa deu errado</strong><br>
+                Você não está logado ou não tem permissão para acessar essa página.
+            </div>
+            <div style='display: flex; justify-content: center; margin-top: 30px;'>
+                <a href="/" target="_self">
+                    <button style='
+                        padding: 10px 25px;
+                        font-size: 18px;
+                        background-color: #f63366;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                    '>
+                        Fazer login
+                    </button>
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+            st.stop()
+            return None
+        return credentials
+    except Exception as e:
+        st.error(f"Erro ao acessar o banco de dados: {e}")
+        return None
+
 def get_authenticator():
-    credentials = get_all_users_for_auth()
-    if not credentials:
-        st.error("❌ Erro ao acessar o banco de dados.")
+    credentials = get_credentials_cached()
+    if credentials is None:
         st.stop()
 
     config = {
@@ -34,8 +68,13 @@ def get_authenticator():
 
 # ✅ Para a página inicial (login e dashboard)
 def login_user():
+    st.logo("logo-quanta-oficial.png", size="large")
     authenticator, credentials = get_authenticator()
     name, auth_status, username = authenticator.login("main", "Login")
+
+    if credentials is None:
+        st.error("Não foi possível carregar as credenciais.")
+        st.stop()
 
     if auth_status is None:
         st.warning("Informe suas credenciais para continuar.")
@@ -79,17 +118,17 @@ def login_user():
         st.session_state.username = None
         st.session_state.name = None
 
-# ✅ Para outras páginas (sem login, só verificação)
 def check_authentication_only():
     authenticator, credentials = get_authenticator()
 
-    # Condições de não-autenticação seguras
+    if credentials is None:
+        st.error("Não foi possível carregar as credenciais.")
+        st.stop()
     if (
         st.session_state.get("authentication_status") != True
         or "username" not in st.session_state
         or "name" not in st.session_state
     ):
-        # Substituição da imagem por uma estrutura de alerta com botão
         st.markdown("""
         <div style='text-align: center; font-size: 60px;'>⚠️</div>
         <div style='text-align: center; font-size: 20px; margin-top: 10px;'>
