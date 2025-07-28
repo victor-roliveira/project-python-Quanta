@@ -77,7 +77,9 @@ with aba_tabela:
 
     selecao_valor = st.session_state.get("selecao_tabela")
     selecao_valor = selecao_valor if selecao_valor else "Todos"
-    mostrar_grafico(df, str(selecao_valor))
+    
+    with st.spinner("Carregando gráfico, por favor aguarde..."):
+        mostrar_grafico(df, str(selecao_valor))
 
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
