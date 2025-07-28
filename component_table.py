@@ -4,7 +4,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
     df = df_original.copy()
 
     df["tarefa_status"] = df.apply(
-        lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + row["tarefa"],
+        lambda row: ("🟢 " if row["concluido"] * 100 >= row["previsto"] else "🔴 ") + str(row["tarefa"]),
         axis=1
     )
 

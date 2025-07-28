@@ -32,7 +32,12 @@ def mostrar_grafico(df, selecao_valor):
     altura_por_item = 10
     altura_total = max(230, len(df_plot) * altura_por_item)
 
+     # ADICIONE ESTA LINHA PARA GARANTIR QUE A COLUNA É TEXTO
+    df_plot["tarefa"] = df_plot["tarefa"].astype(str)
+
+    # AGORA A LINHA ABAIXO FUNCIONARÁ SEM ERRO
     df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
+
 
     fig = px.bar(
         df_plot, x="tarefa_curta", y=["previsto", "concluido"],

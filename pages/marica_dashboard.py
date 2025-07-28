@@ -56,7 +56,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Acompanhamento Geral Maricá")
+st.markdown('<h1 style="margin-bottom: -40px;margin-top: 20px;">Acompanhamento Geral Maricá</h1>', unsafe_allow_html=True)
 
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
 
