@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import time # Vamos manter para a experiência do usuário
+import time
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
@@ -15,16 +15,23 @@ protect_page()
 # (Seu CSS continua aqui, sem alterações)
 st.markdown("""
     <style>
-        ...
+        html, body, .stApp {
+            padding-top: 0px !important;
+            margin-top: 0px !important;
+        }
+        .block-container {
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
-
 
 # --- PASSO 1: Criar uma função para carregar os dados ---
 # --- PASSO 2: Adicionar o decorador @st.cache_data ---
 @st.cache_data # Este é o comando mágico!
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
+    #df.to_parquet("ProjectEmExcel_MKE.parquet")
     df.dropna(subset=['Nome da Tarefa'], inplace=True)
 
     df = df[[ 
@@ -88,7 +95,7 @@ with aba_tabela:
     with st.spinner("Carregando gráfico, por favor aguarde..."):
         # Se a função do gráfico for muito rápida, use um pequeno sleep
         # para garantir que o spinner seja visto, melhorando a UX.
-        time.sleep(2)
+        time.sleep(1)
         mostrar_grafico(df, str(selecao_valor))
 
 with aba_atrasadas:
