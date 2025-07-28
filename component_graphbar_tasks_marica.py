@@ -29,24 +29,6 @@ def mostrar_graficos_tarefas_atrasadas(df):
 
     df_comparativo = pd.concat([contagem_atrasadas, contagem_concluidas])
 
-    area_abbreviations = {
-        "ENG": "ENG",
-        "Alexandre": "Ale",
-        "Alan / Leo": "Alan/L",
-        "Alexandre / Abel": "Ale/A",
-        "Alexandre / Bruno": "Ale/B",
-        "ARQ": "ARQ",
-        "Maíra/Jairo": "Mai/J",
-        "Alexandre / Marcel": "Ale/M",
-        "Alexandre / Thaty": "Ale/T",
-        "ECO": "ECO",
-        "Glauce": "Glau",
-        "Guilherme": "Gui",
-        "Alan / Lucas": "Alan/L",
-        "Alexandre / Vanessa": "Ale/V",
-        "Alexandre /Thaty": "Ale/T"
-    }
-
     fig = px.bar(
         df_comparativo,
         x="Área",

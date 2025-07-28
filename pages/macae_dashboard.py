@@ -3,13 +3,13 @@ import pandas as pd
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
-from auth_session import check_authentication_only
+from auth_session import protect_page
 
 st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png",layout="wide")
 st.logo("logo-quanta-oficial.png", size="large")
 
 # --- Autenticação centralizada ---
-session_data = check_authentication_only()
+protect_page()
 # --- Estilos ---
 st.markdown("""
     <style>

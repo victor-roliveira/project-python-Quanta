@@ -24,13 +24,14 @@ def mostrar_grafico(df, selecao_valor):
     if df_plot["concluido"].max() <= 1:
         df_plot["concluido"] *= 100
 
-    st.subheader("Comparativo de Projetos")
+    st.markdown('<h3 style="margin-bottom: -50px;margin-top: -10px;">Comparativo de Projetos</h3>', unsafe_allow_html=True)
+    
     if df_plot.empty:
         st.info("Nenhum subtópico encontrado para este item.")
         return
     
     altura_por_item = 10
-    altura_total = max(350, len(df_plot) * altura_por_item)
+    altura_total = max(230, len(df_plot) * altura_por_item)
 
     df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
 
@@ -43,7 +44,7 @@ def mostrar_grafico(df, selecao_valor):
     )
     fig.update_layout(
         yaxis=dict(range=[0,100], tickformat=".0f", title="Percentual (%)"),
-        xaxis_title="Tarefa", legend_title="", bargap=0.8
+        xaxis_title="Tarefa", legend_title="", bargap=0.8, margin=dict(b=2)
     )
     fig.update_xaxes(tickangle=0, tickfont=dict(size=11))
     with st.container():

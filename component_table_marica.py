@@ -155,7 +155,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         df,
         gridOptions=gb.build(),
         key="tabela_resetada" if limpar_selecao else "tabela_principal",
-        height=238,
+        height=350,
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
