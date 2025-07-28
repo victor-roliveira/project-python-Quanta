@@ -84,4 +84,4 @@ with aba_atrasadas:
 
 with aba_resumo:
     st.markdown("<h3 style='text-align: center;'>Resumo Geral de Avanço</h3>", unsafe_allow_html=True)
-    st.image("resumo_geral.png", use_container_width=True, output_format="PNG")
+    st.image("resumo-geral.jpg", use_container_width=True, output_format="PNG")
