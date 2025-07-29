@@ -11,8 +11,6 @@ st.logo("logo-quanta-oficial.png", size="large")
 
 protect_page()
 
-# --- Estilos ---
-# (Seu CSS continua aqui, sem alterações)
 st.markdown("""
     <style>
         html, body, .stApp {
@@ -25,9 +23,6 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-
-# --- PASSO 1: Criar uma função para carregar os dados ---
-# --- PASSO 2: Adicionar o decorador @st.cache_data ---
 @st.cache_data # Este é o comando mágico!
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
@@ -61,9 +56,6 @@ def carregar_dados():
     df = df[colunas]
     return df
 
-# --- PASSO 3: Chamar a função cacheada ---
-# Agora, o código abaixo só será executado de verdade na primeira vez.
-# Nas interações seguintes, o 'df' virá instantaneamente do cache.
 df = carregar_dados()
 
 st.markdown('<h1 style="margin-bottom: -30px;margin-top: 20px;">Acompanhamento Geral Macaé</h1>', unsafe_allow_html=True)

@@ -32,8 +32,17 @@ def mostrar_grafico(df, selecao_valor):
     
     altura_por_item = 10
     altura_total = max(230, len(df_plot) * altura_por_item)
+    # --- Início da Modificação ---
+    # Define a quantidade máxima de caracteres com base no número de tarefas
+    if len(df_plot) > 7:
+        max_chars = 12
+    else:
+        max_chars = 30
 
-    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: x if len(x) <= 20 else x[:20] + "...")
+    # Aplica a abreviação condicional
+    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(
+        lambda x: x if len(x) <= max_chars else x[:max_chars] + "..."
+    )
 
     fig = px.bar(
         df_plot, x="tarefa_curta", y=["previsto", "concluido"],
