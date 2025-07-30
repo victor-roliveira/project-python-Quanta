@@ -43,16 +43,6 @@ st.logo("logo-quanta-oficial.png", size="large")
 
 st.markdown("""
     <style>
-        /* Ajusta o padding e margem gerais da aplicação */
-        html, body, .stApp {
-            padding-top: 0px !important;
-            margin-top: 0px !important;
-        }
-        .block-container {
-            padding-top: 0px !important;
-            padding-bottom: 0px !important;
-        }
-
         /* Torna a sidebar mais escura no tema claro */
         /* Seletor para o container principal da sidebar (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 {
@@ -60,42 +50,38 @@ st.markdown("""
             color: #FFFFFF; /* Cor do texto geral dentro da sidebar para contraste */
         }
         
-        /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar */
-        /* Seletor do texto dos links da sidebar (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.e16b601d0 > ul > li > div > a > span {
+        /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar (ATUALIZADO) */
+        /* Removido o ':nth-child(1)' para aplicar a todos os itens */
+        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a > span {
             color: #ADD8E6 !important; /* Exemplo: Azul claro para o texto dos links */
+            /* Você pode adicionar outras propriedades aqui, como: */
+            /* font-weight: bold; */
         }
 
-        /* Estiliza o HOVER (quando o mouse passa por cima) dos itens da sidebar */
-        /* Seletor do hover dos links da sidebar (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.e16b601d0 > ul > li > div > a:hover {
+        /* Estiliza o HOVER (quando o mouse passa por cima) dos itens da sidebar (ATUALIZADO) */
+        /* Note que o :hover é aplicado ao <a> pai para que toda a área do link reaja */
+        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a:hover {
             background-color: #555555; /* Um fundo levemente mais claro no hover */
             border-radius: 5px; /* Adiciona bordas arredondadas no hover */
         }
-        /* Estiliza o texto do item no HOVER (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.e16b601d0 > ul > li > div > a:hover > span {
+        /* Estiliza o texto do item no HOVER (ATUALIZADO) */
+        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a:hover > span {
             color: #00BFFF !important; /* Um azul mais forte no hover para o texto */
         }
 
-        /* Estiliza o item ATIVO (página atualmente selecionada) na sidebar */
-        /* Seletor da página ativa na sidebar (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.e16b601d0 > ul > li > div > a[aria-current="page"] {
+
+        /* Estiliza o item ATIVO (página atualmente selecionada) na sidebar (ATUALIZADO) */
+        /* O [aria-current="page"] é aplicado ao <a> pai */
+        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a[aria-current="page"] {
             background-color: #444444; /* Fundo diferente para a página ativa */
         }
-        /* Estiliza o texto do item ATIVO (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.e16b601d0 > ul > li > div > a[aria-current="page"] > span {
+        /* Estiliza o texto do item ATIVO (ATUALIZADO) */
+        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a[aria-current="page"] > span {
             color: #FFD700 !important; /* Exemplo: Amarelo para a página ativa */
             font-weight: bold; /* Deixa o texto em negrito */
         }
-
-        /* Ajuste para o logo, se estiver dentro da sidebar e precisar de ajuste */
-        /* Seletor do logo (ATUALIZADO com a nova classe do pai) */
-        #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 img {
-            filter: brightness(0) invert(1); /* Inverte as cores da imagem (útil para logos pretos em fundo branco) */
-        }
-
-        /* Exemplo para qualquer texto padrão ou título na sidebar que não seja um link */
-        /* Seletor de outros textos na sidebar (ATUALIZADO com a nova classe do pai) */
+            
+        /* Exemplo para qualquer texto padrão ou título na sidebar que não seja um link (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 p, 
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h1,
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h2,
@@ -104,10 +90,10 @@ st.markdown("""
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h5,
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h6 {
             color: #FFFFFF !important;
-        }
-        
+        }        
     </style>
 """, unsafe_allow_html=True)
+
 st.markdown('<h1 style="margin-bottom: -40px;margin-top: 20px;">Acompanhamento Geral Maricá</h1>', unsafe_allow_html=True)
 
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
