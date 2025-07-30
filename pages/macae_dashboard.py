@@ -13,6 +13,16 @@ protect_page()
 
 st.markdown("""
     <style>
+        /* Ajusta o padding e margem gerais da aplicação */
+        html, body, .stApp {
+            padding-top: 0px !important;
+            margin-top: 0px !important;
+        }
+        .block-container {
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+        }
+            
         /* Torna a sidebar mais escura no tema claro */
         /* Seletor para o container principal da sidebar (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 {
