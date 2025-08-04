@@ -25,7 +25,7 @@ st.markdown("""
         /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar (ATUALIZADO) */
         /* Removido o ':nth-child(1)' para aplicar a todos os itens */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a > span {
-            color: #ADD8E6 !important; /* Exemplo: Azul claro para o texto dos links */
+            color: #ffffff !important; /* Exemplo: Azul claro para o texto dos links */
             /* Você pode adicionar outras propriedades aqui, como: */
             /* font-weight: bold; */
         }

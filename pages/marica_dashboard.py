@@ -4,6 +4,7 @@ from component_table_marica import mostrar_tabela
 from component_graphbar_marica import mostrar_grafico
 from component_graphbar_tasks_marica import mostrar_graficos_tarefas_atrasadas
 from auth_session import protect_page
+from component_overall_marica import mostrar_tabela_projetos_especificos_aggrid_marica
 
 protect_page()
 
@@ -63,7 +64,7 @@ st.markdown("""
         /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar (ATUALIZADO) */
         /* Removido o ':nth-child(1)' para aplicar a todos os itens */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a > span {
-            color: #ADD8E6 !important; /* Exemplo: Azul claro para o texto dos links */
+            color: #ffffff !important; /* Exemplo: Azul claro para o texto dos links */
             /* Você pode adicionar outras propriedades aqui, como: */
             /* font-weight: bold; */
         }
@@ -109,7 +110,7 @@ st.markdown('<h1 style="margin-bottom: -40px;margin-top: 20px;">Acompanhamento G
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
 
 # Abas de navegação
-aba_tabela, aba_atrasadas = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área"])
+aba_tabela, aba_atrasadas, aba_geral = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"])
 
 with aba_tabela:
     if "selecao_tabela" not in st.session_state:
@@ -134,3 +135,6 @@ with aba_tabela:
 
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df) 
+
+with aba_geral:
+    mostrar_tabela_projetos_especificos_aggrid_marica(df)

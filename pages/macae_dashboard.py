@@ -5,6 +5,7 @@ from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 from auth_session import protect_page
+from component_overall import mostrar_tabela_projetos_especificos_aggrid
 
 st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png",layout="wide")
 st.logo("logo-quanta-oficial.png", size="large")
@@ -33,7 +34,7 @@ st.markdown("""
         /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar (ATUALIZADO) */
         /* Removido o ':nth-child(1)' para aplicar a todos os itens */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a > span {
-            color: #ADD8E6 !important; /* Exemplo: Azul claro para o texto dos links */
+            color: #ffffff !important; /* Exemplo: Azul claro para o texto dos links */
             /* Você pode adicionar outras propriedades aqui, como: */
             /* font-weight: bold; */
         }
@@ -144,5 +145,5 @@ with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
 
 with aba_resumo:
-    st.markdown("<h3 style='text-align: center;'>Resumo Geral de Avanço</h3>", unsafe_allow_html=True)
-    st.image("resumo-geral.jpg", use_container_width=True, output_format="PNG")
+    st.markdown("<h3 style='text-align: center;'>Resumo Geral das OS's Principais</h3>", unsafe_allow_html=True)
+    mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))
