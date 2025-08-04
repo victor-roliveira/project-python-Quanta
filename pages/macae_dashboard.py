@@ -146,4 +146,5 @@ with aba_atrasadas:
 
 with aba_resumo:
     st.markdown("<h3 style='text-align: center;'>Resumo Geral das OS's Principais</h3>", unsafe_allow_html=True)
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / ❌ Não Possui /❕Terceirizados  / 🔄️ Não Iniciado</h3>", unsafe_allow_html=True)
     mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))
