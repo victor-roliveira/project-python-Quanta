@@ -147,8 +147,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         }
     """)
     
-    # --- INÍCIO DAS MUDANÇAS: REPLICANDO A LÓGICA DE AGRUPAMENTO DE COLUNAS ---
-    
     column_defs = [
         {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 350, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
         {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 150, "cellRenderer": barra_progress_renderer}
@@ -195,7 +193,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         "defaultColDef": {"resizable": True, "sortable": True, "cellStyle": {"textAlign": "center"}, "minWidth": 150},
         "domLayout": 'normal',
     }
-    # --- FIM DAS MUDANÇAS ---
 
     AgGrid(
         tabela_para_grid,
@@ -212,7 +209,8 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             },
             ".ag-header-cell-text, .ag-header-group-cell-label": {
                 "font-size": "14px",
-                "white-space": "normal"
+                "white-space": "normal",
             },
         },
     )
+   
