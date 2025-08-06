@@ -111,15 +111,15 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 if children:
                     children_defs.append({"headerName": child_name, "children": children})
             else:
-                children_defs.append({"headerName": child_name, "field": field_id, "width": 100, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
+                children_defs.append({"headerName": child_name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
         return children_defs
 
     template_etapa_name = id_to_name_map.get(template_etapa_id, "")
     template_name_path_base = tuple(id_to_name_map.get('.'.join(template_etapa_id.split('.')[:i+1])) for i in range(2))
 
     column_defs = [
-        {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 350, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
-        {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 150, "cellRenderer": barra_progress_renderer}
+        {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 160, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
+        {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 120, "cellRenderer": barra_progress_renderer}
     ]
     column_defs.extend(build_nested_cols(template_etapa_id, template_name_path_base))
 
@@ -152,15 +152,20 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     gridOptions = {
         "columnDefs": column_defs,
         "defaultColDef": {"resizable": True, "sortable": False, "cellStyle": {"textAlign": "center"}},
-        "domLayout": 'normal', "groupHeaderHeight": 45, "headerHeight": 40,
+        "domLayout": 'normal', "groupHeaderHeight": 45, "headerHeight": 35,
     }
 
     AgGrid(
         tabela_para_grid, gridOptions=gridOptions, height=700, allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         custom_css={
-            ".ag-cell": {"font-size": "12px", "border-right": "2px solid white", "border-bottom": "2px solid white"},
-            ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "13px", "white-space": "normal", "line-height": "1.3"},
+            # Células: fonte reduzida de 12px para 11px
+            ".ag-cell": {"font-size": "8px !important", "border-right": "2px solid white", "border-bottom": "2px solid white"},
+            
+            # Cabeçalhos: fonte reduzida de 13px para 12px
+            ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "10px !important", "white-space": "normal", "line-height": "1.3"},
+            
+            # Estilos adicionais para cabeçalhos verticais (sem alteração)
             ".vertical-header .ag-header-cell-label": {"writing-mode": "vertical-rl", "transform": "rotate(180deg)", "display": "flex", "align-items": "center", "justify-content": "center", "padding-bottom": "5px"},
         },
         key='aggrid_projetos_macae_v5'
