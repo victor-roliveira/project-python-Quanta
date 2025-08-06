@@ -87,8 +87,10 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 eGui.style.backgroundColor = '#28a745'; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold'; return '✔';
             } else if (concluido_percent < previsto_val) {
                 eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white'; return concluido_percent + '%';
+            } else if (concluido_percent > previsto_val) {
+                eGui.style.backgroundColor = '#ffffff'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold'; return concluido_percent + '%🔃';
             } else {
-                eGui.style.color = 'white'; return concluido_percent + '%🔃';
+                eGui.style.backgroundColor = '#ffd600'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold'; return concluido_percent + '%🔄️';
             }
         }
     """)
