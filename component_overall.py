@@ -1,216 +1,165 @@
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, JsCode
 import json
 
 def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     df = df_original.copy()
-
-    # Garante que não haja espaços em branco extras nos nomes das tarefas.
     df['tarefa'] = df['tarefa'].str.strip()
 
-    # 1. Criar um mapa de "caminho hierárquico" para "nome da tarefa".
-    path_to_name_map = df.set_index(df['hierarchy_path'].apply(tuple))['tarefa'].to_dict()
+    # --- ETAPA 1: PREPARAÇÃO DOS DADOS E IDENTIFICADORES ---
 
-    # 2. Definir os NÚMEROS dos projetos principais (nível 1) de interesse.
+    df['hierarchy_path'] = df['hierarchy_path'].apply(lambda p: [str(i) for i in p] if isinstance(p, list) else [])
+    df['hierarchy_id'] = df['hierarchy_path'].apply(lambda p: '.'.join(p))
+    
     projetos_principais_numeros = {'3', '4', '5'}
+    df_escopo = df[df['hierarchy_path'].apply(lambda p: len(p) > 0 and p[0] in projetos_principais_numeros)].copy()
 
-    # 3. Isolar as tarefas de nível 3 e 4.
-    df_nivel3 = df[df['hierarchy_path'].apply(
-        lambda p: isinstance(p, list) and len(p) == 3 and p[0] in projetos_principais_numeros
+    id_to_name_map = df.set_index('hierarchy_id')['tarefa'].to_dict()
+
+    # ## LÓGICA DE MAPEAMENTO POR NOMES ##
+    # 1. Para cada tarefa, crie seu "caminho de nomes" completo.
+    def get_name_path(path_list):
+        return tuple(id_to_name_map.get('.'.join(path_list[:i+1]), '') for i in range(len(path_list)))
+
+    df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
+
+    # 2. Crie um dicionário para busca de status usando o caminho de nomes como chave.
+    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto']].to_dict('index')
+
+    # Função de ordenação natural para garantir que '2' venha antes de '10'.
+    def natural_sort_key(hid):
+        return tuple(int(x) for x in hid.split('.'))
+
+    # --- ETAPA 2: DEFINIR O MODELO DAS COLUNAS E CONSTRUIR A HIERARQUIA ---
+
+    etapas_df = df[df['hierarchy_path'].apply(lambda p: len(p) == 2 and p[0] in projetos_principais_numeros)].copy()
+    etapas_df['sort_key'] = etapas_df['hierarchy_id'].apply(natural_sort_key)
+    etapas_df.sort_values(by='sort_key', inplace=True)
+    etapas_para_mostrar = etapas_df[['hierarchy_id', 'tarefa']].to_records(index=False)
+
+    if etapas_para_mostrar.size == 0:
+        return st.warning("Nenhuma etapa (nível 2) encontrada para os projetos.")
+
+    template_etapa_id = etapas_para_mostrar[0][0] # ID da primeira etapa
+
+    template_parent_child_map = {}
+    template_descendants = df_escopo[df_escopo['hierarchy_path'].apply(
+        lambda p: len(p) > 2 and '.'.join(p[:2]) == template_etapa_id
     )]
-    df_nivel4 = df[df['hierarchy_path'].apply(
-        lambda p: isinstance(p, list) and len(p) == 4 and p[0] in projetos_principais_numeros
-    )]
 
-    if df_nivel4.empty:
-        return st.warning("Não foram encontradas tarefas detalhadas (nível 4) para os projetos 3, 4 e 5.")
+    leaf_name_paths_relative = []
+    for _, row in template_descendants.iterrows():
+        parent_id = '.'.join(row['hierarchy_path'][:-1])
+        if parent_id not in template_parent_child_map:
+            template_parent_child_map[parent_id] = []
+        template_parent_child_map[parent_id].append(row['hierarchy_id'])
+        # Se for uma tarefa "folha" (sem filhos), adicione seu caminho relativo de nomes
+        if row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique():
+             leaf_name_paths_relative.append(row['name_path'][2:])
 
-    # 4. Preparar o DataFrame para a pivotagem.
-    # O índice será o pai de nível 2, e as colunas serão as tarefas de nível 4.
-    df_nivel4['etapa_avo'] = df_nivel4['hierarchy_path'].apply(lambda p: path_to_name_map.get(tuple(p[:2])))
-    df_nivel4['tarefa_detalhada'] = df_nivel4['tarefa']
-    
-    df_nivel4['status_data'] = df_nivel4.apply(
-        lambda row: {'concluido': row['concluido'], 'previsto': row['previsto']},
-        axis=1
-    )
-    df_nivel4.dropna(subset=['etapa_avo'], inplace=True)
 
-    # 5. Criar a tabela pivô.
-    tabela_pivo = df_nivel4.pivot_table(
-        index='etapa_avo', 
-        columns='tarefa_detalhada', 
-        values='status_data',
-        aggfunc='first'
-    )
-
-    # 6. Obter os dados de progresso para a "Etapa" (nível 2).
-    df_nivel2 = df[df['hierarchy_path'].apply(len) == 2]
-    
-    # Remove nomes de tarefas duplicados de nível 2 antes de criar o dicionário.
-    df_nivel2_unique = df_nivel2.drop_duplicates(subset=['tarefa'], keep='first')
-    etapa_data_map = df_nivel2_unique.set_index('tarefa')[['concluido', 'previsto']].to_dict('index')
-    
-    tabela_para_grid = tabela_pivo.reset_index()
-    tabela_para_grid.rename(columns={'etapa_avo': 'Etapa'}, inplace=True)
-
-    # Adiciona a coluna 'Progresso' com os dados para o renderer.
-    def get_progress_data(etapa_name):
-        data = etapa_data_map.get(etapa_name)
-        if data:
-            # O renderer espera 'concluido' como 0-100.
-            progress_info = {
-                'concluido': round(data.get('concluido', 0) * 100),
-                'previsto': data.get('previsto', 0)
-            }
-            return json.dumps(progress_info)
-        return None
-        
-    tabela_para_grid['Progresso'] = tabela_para_grid['Etapa'].apply(get_progress_data)
-    
-    # Reordena as colunas.
-    cols = tabela_para_grid.columns.tolist()
-    if 'Progresso' in cols:
-        cols.insert(1, cols.pop(cols.index('Progresso')))
-        tabela_para_grid = tabela_para_grid[cols]
-
-    # 7. Definir os renderers JavaScript para a AgGrid.
-    
-    # Renderer para a barra de progresso.
     barra_progress_renderer = JsCode("""
         function(params) {
             if (!params.value) return '';
             let data;
-            try {
-                data = JSON.parse(params.value);
-            } catch {
-                data = { concluido: 0, previsto: 0 };
-            }
-
+            try { data = JSON.parse(params.value); } catch { data = { concluido: 0, previsto: 0 }; }
             const concluido = data.concluido || 0;
-            const previsto = data.previsto || 0;
-
             if (concluido === 100) {
-                params.eGridCell.innerHTML = `
-                    <div style="text-align: center; font-weight: bold; color: #2ebe00; margin-top: 2px;">
-                        Finalizado ✅
-                    </div>
-                `;
+                params.eGridCell.innerHTML = `<div style="text-align: center; font-weight: bold; color: #2ebe00; margin-top: 2px;">Finalizado ✅</div>`;
                 return;
             }
-
             let color = '#7f9bff';
-            if (concluido < previsto) {
-                color = '#7f9bff';
-            }
-
             const width = Math.min(Math.max(concluido, 0), 100);
-
-            params.eGridCell.innerHTML = `
-                <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px; margin-top: 5px;">
-                    <div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div>
-                </div>
-            `;
+            params.eGridCell.innerHTML = `<div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px; margin-top: 5px;"><div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div></div>`;
         }
     """)
 
-    # Renderer para as células de tarefas individuais.
     cell_renderer_js = JsCode("""
         function(params) {
             const eGui = params.eGridCell;
-            eGui.style.backgroundColor = 'transparent';
-            eGui.style.color = 'black';
-            eGui.style.fontWeight = 'normal';
-
-            if (params.value == null || typeof params.value !== 'object') {
-                return "❌";
-            }
-
+            eGui.style.backgroundColor = 'transparent'; eGui.style.color = 'black'; eGui.style.fontWeight = 'normal';
+            if (params.value == null || typeof params.value !== 'object') { return "❌"; }
             const concluido_val = params.value.concluido || 0;
             const previsto_val = params.value.previsto || 0;
             const concluido_percent = Math.round(concluido_val * 100);
-
             if (concluido_percent === 100) {
-                eGui.style.backgroundColor = '#28a745';
-                eGui.style.color = 'white';
-                eGui.style.fontWeight = 'bold';
-                return '✔';
+                eGui.style.backgroundColor = '#28a745'; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold'; return '✔';
             } else if (concluido_percent < previsto_val) {
-                eGui.style.backgroundColor = '#dc3545';
-                eGui.style.color = 'white';
-                return concluido_percent + '%';
+                eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white'; return concluido_percent + '%';
             } else {
-                eGui.style.color = 'white';
-                return concluido_percent + '%🔄️';
+                eGui.style.color = 'white'; return concluido_percent + '%🔃';
             }
         }
     """)
-    
+
+    def build_nested_cols(parent_id, parent_name_path):
+        children_defs = []
+        child_ids = sorted(template_parent_child_map.get(parent_id, []), key=natural_sort_key)
+        
+        for child_id in child_ids:
+            child_name = id_to_name_map.get(child_id, "N/A")
+            current_name_path = parent_name_path + (child_name,)
+            
+            # O field da coluna será o caminho relativo de nomes, separado por um pipe
+            field_id = "|".join(current_name_path[2:])
+
+            if child_id in template_parent_child_map:
+                children = build_nested_cols(child_id, current_name_path)
+                if children:
+                    children_defs.append({"headerName": child_name, "children": children})
+            else:
+                children_defs.append({"headerName": child_name, "field": field_id, "width": 100, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
+        return children_defs
+
+    template_etapa_name = id_to_name_map.get(template_etapa_id, "")
+    template_name_path_base = tuple(id_to_name_map.get('.'.join(template_etapa_id.split('.')[:i+1])) for i in range(2))
+
     column_defs = [
         {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 350, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
         {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 150, "cellRenderer": barra_progress_renderer}
     ]
+    column_defs.extend(build_nested_cols(template_etapa_id, template_name_path_base))
 
-    # Mapeia pais (Nível 3) para filhos (Nível 4)
-    parent_child_map = {}
-    for _, row in df_nivel4.iterrows():
-        parent_path = tuple(row['hierarchy_path'][:3])
-        parent_name = path_to_name_map.get(parent_path)
-        if parent_name:
-            if parent_name not in parent_child_map:
-                parent_child_map[parent_name] = []
-            child_name = row['tarefa']
-            if child_name not in parent_child_map[parent_name]:
-                parent_child_map[parent_name].append(child_name)
-    
-    # Cria uma lista ordenada e ÚNICA de nomes de tarefas de Nível 3.
-    df_nivel3_ordenado = df_nivel3.sort_values(by='hierarchy_path')
-    ordered_unique_l3_names = df_nivel3_ordenado['tarefa'].drop_duplicates().tolist()
+    # --- ETAPA 3: CONSTRUIR O DATAFRAME FINAL PARA O AGGRID ---
 
-    # Itera sobre a lista de nomes de nível 3 para criar as colunas.
-    for task_name_n3 in ordered_unique_l3_names:
-        # CASO 1: A tarefa Nível 3 TEM filhos (nível 4) -> Cria um Grupo de Colunas.
-        if task_name_n3 in parent_child_map and parent_child_map[task_name_n3]:
-            children_names = sorted(parent_child_map[task_name_n3])
-            children_defs = [
-                {"headerName": child_name, "field": child_name, "cellRenderer": cell_renderer_js}
-                for child_name in children_names
-            ]
-            column_defs.append({"headerName": task_name_n3, "children": children_defs})
+    etapa_progress_map = df[df['hierarchy_path'].apply(len) == 2].set_index('hierarchy_id')[['concluido', 'previsto']].to_dict('index')
+
+    grid_data = []
+    for etapa_id, etapa_name in etapas_para_mostrar:
+        row_data = {'Etapa': etapa_name, 'Progresso': None}
         
-        # CASO 2: A tarefa Nível 3 NÃO TEM filhos -> Cria uma Coluna Simples.
-        elif task_name_n3 not in parent_child_map:
-            column_defs.append({
-                "headerName": task_name_n3,
-                "field": task_name_n3,
-                "cellRenderer": cell_renderer_js
-            })
-    
-    # 8. Montar 'gridOptions' e chamar AgGrid.
+        progress_info = etapa_progress_map.get(etapa_id)
+        if progress_info:
+            row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
+
+        etapa_base_name_path = tuple(id_to_name_map.get('.'.join(etapa_id.split('.')[:i+1])) for i in range(2))
+
+        for rel_name_path in leaf_name_paths_relative:
+            lookup_key = etapa_base_name_path + rel_name_path
+            field_key = "|".join(rel_name_path)
+            
+            status = status_by_name_path.get(lookup_key)
+            row_data[field_key] = status
+            
+        grid_data.append(row_data)
+
+    tabela_para_grid = pd.DataFrame(grid_data)
+
+    # --- ETAPA 4: RENDERIZAR A TABELA ---
     gridOptions = {
         "columnDefs": column_defs,
-        "defaultColDef": {"resizable": True, "sortable": True, "cellStyle": {"textAlign": "center"}, "minWidth": 150},
-        "domLayout": 'normal',
+        "defaultColDef": {"resizable": True, "sortable": False, "cellStyle": {"textAlign": "center"}},
+        "domLayout": 'normal', "groupHeaderHeight": 45, "headerHeight": 40,
     }
 
     AgGrid(
-        tabela_para_grid,
-        gridOptions=gridOptions,
-        height=700,
-        allow_unsafe_jscode=True,
+        tabela_para_grid, gridOptions=gridOptions, height=700, allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         custom_css={
-            ".ag-cell": {
-                "font-size": "12px",
-                "font-family": "'Raleway', sans-serif",
-                "border-right": "2px solid white",
-                "border-bottom": "2px solid white"
-            },
-            ".ag-header-cell-text, .ag-header-group-cell-label": {
-                "font-size": "14px",
-                "white-space": "normal",
-            },
+            ".ag-cell": {"font-size": "12px", "border-right": "2px solid white", "border-bottom": "2px solid white"},
+            ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "13px", "white-space": "normal", "line-height": "1.3"},
+            ".vertical-header .ag-header-cell-label": {"writing-mode": "vertical-rl", "transform": "rotate(180deg)", "display": "flex", "align-items": "center", "justify-content": "center", "padding-bottom": "5px"},
         },
+        key='aggrid_projetos_macae_v5'
     )
-   
