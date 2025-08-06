@@ -160,7 +160,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         enable_enterprise_modules=True,
         custom_css={
             # Células: fonte reduzida de 12px para 11px
-            ".ag-cell": {"font-size": "8px !important", "border-right": "2px solid white", "border-bottom": "2px solid white"},
+            ".ag-cell": {"font-size": "10px !important", "border-right": "2px solid white", "border-bottom": "2px solid white"},
             
             # Cabeçalhos: fonte reduzida de 13px para 12px
             ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "10px !important", "white-space": "normal", "line-height": "1.3"},
