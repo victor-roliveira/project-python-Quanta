@@ -74,25 +74,28 @@ st.markdown("""
         }        
     </style>
 """, unsafe_allow_html=True)
-@st.cache_data # Este é o comando mágico!
+@st.cache_data 
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
-    #df.to_parquet("ProjectEmExcel_MKE.parquet")
+
     df.dropna(subset=['Nome da Tarefa'], inplace=True)
 
     df = df[[ 
         "Número da estrutura de tópicos", "Nome da Tarefa", "Término",
         "%concluida prev. (Número10)", "% concluída",
-        "Responsável 01", "Responsável 02", "Nomes dos recursos", "Exe."
+        "Responsável 01", "Responsável 02", "Nomes dos recursos", "Exe.",
+        "Terceirizadas"
     ]].copy()
 
     df.columns = [
         "hierarquia", "tarefa", "termino", "previsto", "concluido",
-        "responsavel 1", "responsavel 2", "nome dos recursos", "execucao"
+        "responsavel 1", "responsavel 2", "nome dos recursos", "execucao",
+        "terceiros"
     ]
 
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
     df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
+    df["terceiros"] = pd.to_numeric(df["terceiros"], errors="coerce").fillna(0)
     df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
 
     df["barra_info"] = df.apply(lambda row: {
@@ -133,11 +136,7 @@ with aba_tabela:
     selecao_valor = st.session_state.get("selecao_tabela")
     selecao_valor = selecao_valor if selecao_valor else "Todos"
     
-    # AGORA O SPINNER VAI FUNCIONAR COMO ESPERADO
-    # Porque a lentidão do carregamento de dados foi removida do rerun.
     with st.spinner("Carregando gráfico, por favor aguarde..."):
-        # Se a função do gráfico for muito rápida, use um pequeno sleep
-        # para garantir que o spinner seja visto, melhorando a UX.
         time.sleep(1)
         mostrar_grafico(df, str(selecao_valor))
 
@@ -145,5 +144,5 @@ with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
 
 with aba_resumo:
-    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluídos / 🔃 Igualados 🟠 / 🔄️ Não Iniciados ⚪ / ❌ Não Possui /❕Terceirizados</h3>", unsafe_allow_html=True)
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / 🔃 Igualado / 🔄️ Não Iniciado / ❌ Não Possui /👷🏼 Terceirizados</h3>", unsafe_allow_html=True)
     mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))

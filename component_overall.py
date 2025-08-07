@@ -17,17 +17,16 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     id_to_name_map = df.set_index('hierarchy_id')['tarefa'].to_dict()
 
-    # ## LÓGICA DE MAPEAMENTO POR NOMES ##
-    # 1. Para cada tarefa, crie seu "caminho de nomes" completo.
     def get_name_path(path_list):
         return tuple(id_to_name_map.get('.'.join(path_list[:i+1]), '') for i in range(len(path_list)))
 
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
 
-    # 2. Crie um dicionário para busca de status usando o caminho de nomes como chave.
-    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto']].to_dict('index')
+    # --- INÍCIO DA CORREÇÃO ---
+    # Adiciona 'terceiros' ao dicionário de status.
+    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros']].to_dict('index')
+    # --- FIM DA CORREÇÃO ---
 
-    # Função de ordenação natural para garantir que '2' venha antes de '10'.
     def natural_sort_key(hid):
         return tuple(int(x) for x in hid.split('.'))
 
@@ -41,7 +40,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     if etapas_para_mostrar.size == 0:
         return st.warning("Nenhuma etapa (nível 2) encontrada para os projetos.")
 
-    template_etapa_id = etapas_para_mostrar[0][0] # ID da primeira etapa
+    template_etapa_id = etapas_para_mostrar[0][0]
 
     template_parent_child_map = {}
     template_descendants = df_escopo[df_escopo['hierarchy_path'].apply(
@@ -54,9 +53,11 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         if parent_id not in template_parent_child_map:
             template_parent_child_map[parent_id] = []
         template_parent_child_map[parent_id].append(row['hierarchy_id'])
-        # Se for uma tarefa "folha" (sem filhos), adicione seu caminho relativo de nomes
-        if row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique():
-             leaf_name_paths_relative.append(row['name_path'][2:])
+        
+        # Verifica se a tarefa é uma "folha" (não tem filhos)
+        is_leaf = row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique()
+        if is_leaf:
+            leaf_name_paths_relative.append(row['name_path'][2:])
 
 
     barra_progress_renderer = JsCode("""
@@ -75,25 +76,42 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         }
     """)
 
+    # --- INÍCIO DA CORREÇÃO ---
+    # Atualiza o cell renderer para incluir o indicador de terceirizados.
     cell_renderer_js = JsCode("""
         function(params) {
             const eGui = params.eGridCell;
             eGui.style.backgroundColor = 'transparent'; eGui.style.color = 'black'; eGui.style.fontWeight = 'normal';
             if (params.value == null || typeof params.value !== 'object') { return "❌"; }
+
             const concluido_val = params.value.concluido || 0;
             const previsto_val = params.value.previsto || 0;
+            const terceiros_val = params.value.terceiros || 0; // Pega o novo valor
             const concluido_percent = Math.round(concluido_val * 100);
+
+            // Define o indicador se a tarefa for terceirizada.
+            const terceiros_indicator = terceiros_val > 0 ? '👷🏼' : '';
+            
+            let text_to_display = '';
+
             if (concluido_percent === 100) {
-                eGui.style.backgroundColor = '#28a745'; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold'; return '✔';
+                eGui.style.backgroundColor = '#28a745'; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
+                text_to_display = '✔';
             } else if (concluido_percent < previsto_val) {
-                eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white'; return concluido_percent + '%';
+                eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white';
+                text_to_display = concluido_percent + '%';
             } else if (concluido_percent > previsto_val) {
-                eGui.style.backgroundColor = '#ffffff'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold'; return concluido_percent + '%🔃';
+                eGui.style.backgroundColor = '#ffffff'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
+                text_to_display = concluido_percent + '%🔃';
             } else {
-                eGui.style.backgroundColor = 'orange'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold'; return concluido_percent + '%🔄️';
+                eGui.style.backgroundColor = 'orange'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
+                text_to_display = concluido_percent + '%🔄️';
             }
+            // Retorna o texto com o indicador anexado.
+            return text_to_display + terceiros_indicator;
         }
     """)
+    # --- FIM DA CORREÇÃO ---
 
     def build_nested_cols(parent_id, parent_name_path):
         children_defs = []
@@ -103,7 +121,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             child_name = id_to_name_map.get(child_id, "N/A")
             current_name_path = parent_name_path + (child_name,)
             
-            # O field da coluna será o caminho relativo de nomes, separado por um pipe
             field_id = "|".join(current_name_path[2:])
 
             if child_id in template_parent_child_map:
@@ -159,13 +176,8 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         tabela_para_grid, gridOptions=gridOptions, height=700, allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         custom_css={
-            # Células: fonte reduzida de 12px para 11px
             ".ag-cell": {"font-size": "10px !important", "border-left": "2px solid black", "border-right": "2px solid black", "border-bottom": "2px solid black"},
-            
-            # Cabeçalhos: fonte reduzida de 13px para 12px
             ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "10px !important", "white-space": "normal", "line-height": "1.3"},
-            
-            # Estilos adicionais para cabeçalhos verticais (sem alteração)
             ".vertical-header .ag-header-cell-label": {"writing-mode": "vertical-rl", "transform": "rotate(180deg)", "display": "flex", "align-items": "center", "justify-content": "center", "padding-bottom": "5px"},
         },
         key='aggrid_projetos_macae_v5'
