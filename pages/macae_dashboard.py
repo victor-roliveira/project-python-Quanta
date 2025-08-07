@@ -24,45 +24,28 @@ st.markdown("""
             padding-bottom: 0px !important;
         }
             
-        /* Torna a sidebar mais escura no tema claro */
-        /* Seletor para o container principal da sidebar (ATUALIZADO) */
+        /* Estilos da Sidebar */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 {
-            background-color: #333333; /* Um cinza escuro para a sidebar */
-            color: #FFFFFF; /* Cor do texto geral dentro da sidebar para contraste */
+            background-color: #333333;
+            color: #FFFFFF;
         }
-        
-        /* Estiliza o TEXTO dentro dos ITENS (páginas/links) da sidebar (ATUALIZADO) */
-        /* Removido o ':nth-child(1)' para aplicar a todos os itens */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a > span {
-            color: #ffffff !important; /* Exemplo: Azul claro para o texto dos links */
-            /* Você pode adicionar outras propriedades aqui, como: */
-            /* font-weight: bold; */
+            color: #ffffff !important;
         }
-
-        /* Estiliza o HOVER (quando o mouse passa por cima) dos itens da sidebar (ATUALIZADO) */
-        /* Note que o :hover é aplicado ao <a> pai para que toda a área do link reaja */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a:hover {
-            background-color: #555555; /* Um fundo levemente mais claro no hover */
-            border-radius: 5px; /* Adiciona bordas arredondadas no hover */
+            background-color: #555555;
+            border-radius: 5px;
         }
-        /* Estiliza o texto do item no HOVER (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a:hover > span {
-            color: #00BFFF !important; /* Um azul mais forte no hover para o texto */
+            color: #00BFFF !important;
         }
-
-
-        /* Estiliza o item ATIVO (página atualmente selecionada) na sidebar (ATUALIZADO) */
-        /* O [aria-current="page"] é aplicado ao <a> pai */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a[aria-current="page"] {
-            background-color: #444444; /* Fundo diferente para a página ativa */
+            background-color: #444444;
         }
-        /* Estiliza o texto do item ATIVO (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 > div.st-emotion-cache-79elbk.ej6j6k40 > ul > div > li > div > a[aria-current="page"] > span {
-            color: #FFD700 !important; /* Exemplo: Amarelo para a página ativa */
-            font-weight: bold; /* Deixa o texto em negrito */
+            color: #FFD700 !important;
+            font-weight: bold;
         }
-            
-        /* Exemplo para qualquer texto padrão ou título na sidebar que não seja um link (ATUALIZADO) */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 p, 
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h1,
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h2,
@@ -71,31 +54,42 @@ st.markdown("""
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h5,
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 h6 {
             color: #FFFFFF !important;
-        }        
+        }
     </style>
 """, unsafe_allow_html=True)
+
 @st.cache_data 
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
     df.dropna(subset=['Nome da Tarefa'], inplace=True)
 
-    df = df[[ 
-        "Número da estrutura de tópicos", "Nome da Tarefa", "Término",
-        "%concluida prev. (Número10)", "% concluída",
-        "Responsável 01", "Responsável 02", "Nomes dos recursos", "Exe.",
-        "Terceirizadas"
-    ]].copy()
+    # --- INÍCIO DA CORREÇÃO ---
+    # Define as colunas que você quer, incluindo "Terceirizadas".
+    colunas_necessarias = {
+        "Número da estrutura de tópicos": "hierarquia",
+        "Nome da Tarefa": "tarefa",
+        "Término": "termino",
+        "%concluida prev. (Número10)": "previsto",
+        "% concluída": "concluido",
+        "Responsável 01": "responsavel 1",
+        "Responsável 02": "responsavel 2",
+        "Nomes dos recursos": "nome dos recursos",
+        "Exe.": "execucao",
+        "Terceirizadas": "terceiros"
+    }
 
-    df.columns = [
-        "hierarquia", "tarefa", "termino", "previsto", "concluido",
-        "responsavel 1", "responsavel 2", "nome dos recursos", "execucao",
-        "terceiros"
-    ]
+    # Filtra o DataFrame para conter apenas as colunas necessárias e as renomeia.
+    df_filtrado = df.rename(columns=lambda col: col.strip())[list(colunas_necessarias.keys())].copy()
+    df_filtrado.rename(columns=colunas_necessarias, inplace=True)
+    df = df_filtrado
+    # --- FIM DA CORREÇÃO ---
 
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
     df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
+    # A coluna "terceiros" agora é carregada e tratada.
     df["terceiros"] = pd.to_numeric(df["terceiros"], errors="coerce").fillna(0)
+    
     df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
 
     df["barra_info"] = df.apply(lambda row: {
@@ -123,7 +117,13 @@ with aba_tabela:
         st.session_state.limpar_selecao_tabela = False
 
     limpar = st.session_state.limpar_selecao_tabela
-    linha_selecionada = mostrar_tabela(df.drop(columns=["execucao"]), limpar_selecao=limpar)
+    
+    # --- INÍCIO DA CORREÇÃO ---
+    # Remove as colunas "execucao" e "terceiros" APENAS para esta tabela.
+    colunas_para_remover = ["execucao", "terceiros"]
+    df_tabela_geral = df.drop(columns=[col for col in colunas_para_remover if col in df.columns])
+    linha_selecionada = mostrar_tabela(df_tabela_geral, limpar_selecao=limpar)
+    # --- FIM DA CORREÇÃO ---
 
     if limpar:
         st.session_state.limpar_selecao_tabela = False
@@ -144,5 +144,8 @@ with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df)
 
 with aba_resumo:
+    # --- INÍCIO DA CORREÇÃO ---
+    # Restaura a legenda para incluir a referência a terceirizados.
     st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / 🔃 Igualado / 🔄️ Não Iniciado / ❌ Não Possui /👷🏼 Terceirizados</h3>", unsafe_allow_html=True)
+    # --- FIM DA CORREÇÃO ---
     mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))
