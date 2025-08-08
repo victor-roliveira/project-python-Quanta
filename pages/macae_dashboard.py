@@ -65,10 +65,11 @@ def carregar_dados():
     df.dropna(subset=['Nome da Tarefa'], inplace=True)
 
     # --- INÍCIO DA CORREÇÃO ---
-    # Define as colunas que você quer, incluindo "Terceirizadas".
+    # Adiciona a coluna "Início" à lista de colunas a serem lidas.
     colunas_necessarias = {
         "Número da estrutura de tópicos": "hierarquia",
         "Nome da Tarefa": "tarefa",
+        "Início": "inicio",
         "Término": "termino",
         "%concluida prev. (Número10)": "previsto",
         "% concluída": "concluido",
@@ -83,12 +84,21 @@ def carregar_dados():
     df_filtrado = df.rename(columns=lambda col: col.strip())[list(colunas_necessarias.keys())].copy()
     df_filtrado.rename(columns=colunas_necessarias, inplace=True)
     df = df_filtrado
-    # --- FIM DA CORREÇÃO ---
-
+    
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
     df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
-    # A coluna "terceiros" agora é carregada e tratada.
     df["terceiros"] = pd.to_numeric(df["terceiros"], errors="coerce").fillna(0)
+    
+    df['inicio'] = df['inicio'].astype(str)
+    df['termino'] = df['termino'].astype(str)
+
+    # Remove o dia da semana (ex: "Qui ") de ambas as colunas.
+    df['inicio'] = df['inicio'].apply(lambda x: x.split(' ')[1] if ' ' in x else x)
+    df['termino'] = df['termino'].apply(lambda x: x.split(' ')[1] if ' ' in x else x)
+
+    # Converte a string limpa (DD/MM/AA) para o formato de exibição (DD/MM/YYYY).
+    df["inicio"] = pd.to_datetime(df["inicio"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
+    df["termino"] = pd.to_datetime(df["termino"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
     
     df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
 
@@ -146,6 +156,6 @@ with aba_atrasadas:
 with aba_resumo:
     # --- INÍCIO DA CORREÇÃO ---
     # Restaura a legenda para incluir a referência a terceirizados.
-    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / 🔃 Igualado / 🔄️ Não Iniciado / ❌ Não Possui /👷🏼 Terceirizados</h3>", unsafe_allow_html=True)
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / ❌ Não Possui /❕Terceirizados / ❗ Não Iniciados Atrasados com Terceirizados </h3>", unsafe_allow_html=True)
     # --- FIM DA CORREÇÃO ---
     mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))

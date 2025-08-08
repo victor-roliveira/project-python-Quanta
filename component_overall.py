@@ -23,8 +23,8 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
 
     # --- INÍCIO DA CORREÇÃO ---
-    # Adiciona 'terceiros' ao dicionário de status.
-    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros']].to_dict('index')
+    # Adiciona 'inicio' ao dicionário de status.
+    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros', 'inicio']].to_dict('index')
     # --- FIM DA CORREÇÃO ---
 
     def natural_sort_key(hid):
@@ -54,7 +54,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             template_parent_child_map[parent_id] = []
         template_parent_child_map[parent_id].append(row['hierarchy_id'])
         
-        # Verifica se a tarefa é uma "folha" (não tem filhos)
         is_leaf = row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique()
         if is_leaf:
             leaf_name_paths_relative.append(row['name_path'][2:])
@@ -76,8 +75,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         }
     """)
 
-    # --- INÍCIO DA CORREÇÃO ---
-    # Atualiza o cell renderer para incluir o indicador de terceirizados.
     cell_renderer_js = JsCode("""
         function(params) {
             const eGui = params.eGridCell;
@@ -86,32 +83,57 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
             const concluido_val = params.value.concluido || 0;
             const previsto_val = params.value.previsto || 0;
-            const terceiros_val = params.value.terceiros || 0; // Pega o novo valor
+            const terceiros_val = params.value.terceiros || 0;
+            const inicio_str = params.value.inicio;
             const concluido_percent = Math.round(concluido_val * 100);
 
-            // Define o indicador se a tarefa for terceirizada.
-            const terceiros_indicator = terceiros_val > 0 ? '👷🏼' : '';
+            // Lógica para tarefas NÃO INICIADAS (0%)
+            if (concluido_percent === 0) {
+                if (terceiros_val > 0) { // Se tiver terceiros
+                    if (inicio_str) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        const parts = inicio_str.split('/');
+                        const startDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                        startDate.setHours(0, 0, 0, 0);
+                        
+                        if (today > startDate) { // Atrasada
+                            eGui.style.color = 'red';
+                        } else { // Não atrasada
+                            eGui.style.color = 'white';
+                        }
+                    } else {
+                        eGui.style.color = 'white'; // Padrão se não houver data de início
+                    }
+                    eGui.style.fontWeight = 'bold';
+                    return ' !';
+                } else { // Se não tiver terceiros
+                    return '➖';
+                }
+            }
             
+            // Lógica para tarefas JÁ INICIADAS (> 0%)
+            const terceiros_indicator = terceiros_val > 0 ? '❕' : '';
             let text_to_display = '';
 
             if (concluido_percent === 100) {
-                eGui.style.backgroundColor = '#28a745'; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
+                eGui.style.color = '#00ff07'; eGui.style.fontWeight = 'bold';
                 text_to_display = '✔';
             } else if (concluido_percent < previsto_val) {
                 eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white';
                 text_to_display = concluido_percent + '%';
             } else if (concluido_percent > previsto_val) {
-                eGui.style.backgroundColor = '#ffffff'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
-                text_to_display = concluido_percent + '%🔃';
-            } else {
-                eGui.style.backgroundColor = 'orange'; eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
-                text_to_display = concluido_percent + '%🔄️';
+                eGui.style.backgroundColor = "#0cc500"; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
+                text_to_display = concluido_percent + '%';
+            } else { // Igual ao previsto
+                eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
+                text_to_display = concluido_percent + '%';
             }
-            // Retorna o texto com o indicador anexado.
+            
             return text_to_display + terceiros_indicator;
         }
     """)
-    # --- FIM DA CORREÇÃO ---
 
     def build_nested_cols(parent_id, parent_name_path):
         children_defs = []
