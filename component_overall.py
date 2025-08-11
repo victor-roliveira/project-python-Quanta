@@ -109,7 +109,8 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                     eGui.style.fontWeight = 'bold';
                     return ' !';
                 } else { // Se não tiver terceiros
-                    return '➖';
+                    eGui.style.color = 'white';
+                    return '-';
                 }
             }
             

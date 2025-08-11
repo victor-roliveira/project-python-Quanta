@@ -156,6 +156,6 @@ with aba_atrasadas:
 with aba_resumo:
     # --- INÍCIO DA CORREÇÃO ---
     # Restaura a legenda para incluir a referência a terceirizados.
-    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / ❌ Não Possui /❕Terceirizados / ❗ Não Iniciados Atrasados com Terceirizados </h3>", unsafe_allow_html=True)
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / ❌ Não Possui /❕Terceirizados / ❗ Não Iniciados Atrasados com Terceirizados / - Não Iniciados Internos</h3>", unsafe_allow_html=True)
     # --- FIM DA CORREÇÃO ---
     mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))

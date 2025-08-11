@@ -89,6 +89,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
     gb.configure_column("tarefa_status", header_name="Tarefa", minWidth=320, maxWidth=400)
+    gb.configure_column("inicio", header_name="Início", cellStyle={"textAlign": "center"}, minWidth=100, maxWidth=200)
     gb.configure_column("termino", header_name="Término", cellStyle={"textAlign": "center"}, maxWidth=120)
     gb.configure_column("previsto",
         header_name="% Prev",
