@@ -7,6 +7,16 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     df = df_original.copy()
     df['tarefa'] = df['tarefa'].str.strip()
 
+    # --- INÍCIO DA CORREÇÃO ---
+    # Adiciona o filtro de visualização
+    view_selection = st.radio(
+        "Selecione a Visualização:",
+        ["Geral Detalhada", "Resumo Pessoal"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    # --- FIM DA CORREÇÃO ---
+
     # --- ETAPA 1: PREPARAÇÃO DOS DADOS E IDENTIFICADORES ---
 
     df['hierarchy_path'] = df['hierarchy_path'].apply(lambda p: [str(i) for i in p] if isinstance(p, list) else [])
@@ -22,10 +32,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
 
-    # --- INÍCIO DA CORREÇÃO ---
-    # Adiciona 'inicio' ao dicionário de status.
     status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros', 'inicio']].to_dict('index')
-    # --- FIM DA CORREÇÃO ---
 
     def natural_sort_key(hid):
         return tuple(int(x) for x in hid.split('.'))
@@ -46,18 +53,48 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     template_descendants = df_escopo[df_escopo['hierarchy_path'].apply(
         lambda p: len(p) > 2 and '.'.join(p[:2]) == template_etapa_id
     )]
-
+    
+    # --- INÍCIO DA CORREÇÃO ---
+    # A lista de tarefas "folha" agora depende da visualização selecionada
+    tasks_to_collapse = {"Plano de Trabalho", "Estudos Iniciais"}
     leaf_name_paths_relative = []
-    for _, row in template_descendants.iterrows():
-        parent_id = '.'.join(row['hierarchy_path'][:-1])
-        if parent_id not in template_parent_child_map:
-            template_parent_child_map[parent_id] = []
-        template_parent_child_map[parent_id].append(row['hierarchy_id'])
-        
-        is_leaf = row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique()
-        if is_leaf:
-            leaf_name_paths_relative.append(row['name_path'][2:])
+    
+    if view_selection == "Resumo Pessoal":
+        collapsed_paths_to_add = []
+        for _, row in template_descendants.iterrows():
+            # Encontra os pais e filhos para o mapa, como antes
+            parent_id = '.'.join(row['hierarchy_path'][:-1])
+            if parent_id not in template_parent_child_map:
+                template_parent_child_map[parent_id] = []
+            template_parent_child_map[parent_id].append(row['hierarchy_id'])
 
+            # Se for uma tarefa a ser resumida, adicione-a à lista de folhas e pule seus filhos
+            if row['tarefa'] in tasks_to_collapse:
+                if row['name_path'][2:] not in collapsed_paths_to_add:
+                    collapsed_paths_to_add.append(row['name_path'][2:])
+                continue
+
+            # Verifica se a tarefa é descendente de uma tarefa resumida
+            is_child_of_collapsed = any(task_name in tasks_to_collapse for task_name in row['name_path'])
+            
+            is_leaf = row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique()
+            
+            # Adiciona apenas se for uma folha e não for filha de uma tarefa resumida
+            if is_leaf and not is_child_of_collapsed:
+                leaf_name_paths_relative.append(row['name_path'][2:])
+        leaf_name_paths_relative.extend(collapsed_paths_to_add)
+
+    else: # Lógica original para a Visão Geral Detalhada
+        for _, row in template_descendants.iterrows():
+            parent_id = '.'.join(row['hierarchy_path'][:-1])
+            if parent_id not in template_parent_child_map:
+                template_parent_child_map[parent_id] = []
+            template_parent_child_map[parent_id].append(row['hierarchy_id'])
+            is_leaf = row['hierarchy_id'] not in df_escopo['hierarchy_path'].apply(lambda p: '.'.join(p[:-1]) if len(p) > 1 else None).unique()
+            if is_leaf:
+                leaf_name_paths_relative.append(row['name_path'][2:])
+
+    # --- FIM DA CORREÇÃO ---
 
     barra_progress_renderer = JsCode("""
         function(params) {
@@ -87,34 +124,21 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             const inicio_str = params.value.inicio;
             const concluido_percent = Math.round(concluido_val * 100);
 
-            // Lógica para tarefas NÃO INICIADAS (0%)
             if (concluido_percent === 0) {
-                if (terceiros_val > 0) { // Se tiver terceiros
+                if (terceiros_val > 0) {
                     if (inicio_str) {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
-                        
                         const parts = inicio_str.split('/');
                         const startDate = new Date(parts[2], parts[1] - 1, parts[0]);
                         startDate.setHours(0, 0, 0, 0);
-                        
-                        if (today > startDate) { // Atrasada
-                            eGui.style.color = 'red';
-                        } else { // Não atrasada
-                            eGui.style.color = 'white';
-                        }
-                    } else {
-                        eGui.style.color = 'white'; // Padrão se não houver data de início
-                    }
+                        if (today > startDate) { eGui.style.color = 'red'; } else { eGui.style.color = 'white'; }
+                    } else { eGui.style.color = 'white'; }
                     eGui.style.fontWeight = 'bold';
-                    return ' !';
-                } else { // Se não tiver terceiros
-                    eGui.style.color = 'white';
-                    return '-';
-                }
+                    return '!';
+                } else { eGui.style.color = 'white'; return '-'; }
             }
             
-            // Lógica para tarefas JÁ INICIADAS (> 0%)
             const terceiros_indicator = terceiros_val > 0 ? '❕' : '';
             let text_to_display = '';
 
@@ -127,11 +151,10 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             } else if (concluido_percent > previsto_val) {
                 eGui.style.backgroundColor = "#0cc500"; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
                 text_to_display = concluido_percent + '%';
-            } else { // Igual ao previsto
+            } else {
                 eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
                 text_to_display = concluido_percent + '%';
             }
-            
             return text_to_display + terceiros_indicator;
         }
     """)
@@ -143,8 +166,15 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         for child_id in child_ids:
             child_name = id_to_name_map.get(child_id, "N/A")
             current_name_path = parent_name_path + (child_name,)
-            
             field_id = "|".join(current_name_path[2:])
+
+            # --- INÍCIO DA CORREÇÃO ---
+            # Se for a visão de resumo e a tarefa for uma das que devem ser resumidas,
+            # trata-a como uma folha e não continua a recursão.
+            if view_selection == "Resumo Pessoal" and child_name in tasks_to_collapse:
+                children_defs.append({"headerName": child_name, "field": field_id, "width": 80, "cellRenderer": cell_renderer_js})
+                continue # Pula para o próximo filho
+            # --- FIM DA CORREÇÃO ---
 
             if child_id in template_parent_child_map:
                 children = build_nested_cols(child_id, current_name_path)
@@ -203,5 +233,5 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "10px !important", "white-space": "normal", "line-height": "1.3"},
             ".vertical-header .ag-header-cell-label": {"writing-mode": "vertical-rl", "transform": "rotate(180deg)", "display": "flex", "align-items": "center", "justify-content": "center", "padding-bottom": "5px"},
         },
-        key='aggrid_projetos_macae_v5'
+        key=f"aggrid_projetos_macae_{view_selection}" # Chave dinâmica para forçar a recriação da tabela
     )
