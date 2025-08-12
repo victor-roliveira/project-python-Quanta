@@ -5,9 +5,20 @@ import json
 
 def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     df = df_original.copy()
-    df['tarefa'] = df['tarefa'].str.strip()
 
-    # Adiciona o filtro de visualização
+    # --- NOVO: Normaliza colunas para evitar falhas de correspondência ---
+    df['tarefa'] = df['tarefa'].astype(str).str.strip()
+    df['hierarchy_path'] = df['hierarchy_path'].apply(
+        lambda p: [str(i).strip() for i in p] if isinstance(p, list) else []
+    )
+    # Garante que valores nulos sejam zeros nas métricas
+    for col in ['concluido', 'previsto', 'terceiros']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    if 'inicio' in df.columns:
+        df['inicio'] = df['inicio'].fillna('')
+
+    # Filtro de visualização
     view_selection = st.radio(
         "Selecione a Visualização:",
         ["Geral Detalhada", "Projetos"],
@@ -15,13 +26,13 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         label_visibility="collapsed"
     )
 
-    # --- ETAPA 1: PREPARAÇÃO DOS DADOS E IDENTIFICADORES ---
-
-    df['hierarchy_path'] = df['hierarchy_path'].apply(lambda p: [str(i) for i in p] if isinstance(p, list) else [])
+    # Identificadores
     df['hierarchy_id'] = df['hierarchy_path'].apply(lambda p: '.'.join(p))
-    
     projetos_principais_numeros = {'3', '4', '5'}
-    df_escopo = df[df['hierarchy_path'].apply(lambda p: len(p) > 0 and p[0] in projetos_principais_numeros)].copy()
+
+    df_escopo = df[
+        df['hierarchy_path'].apply(lambda p: len(p) > 0 and p[0] in projetos_principais_numeros)
+    ].copy()
 
     id_to_name_map = df.set_index('hierarchy_id')['tarefa'].to_dict()
 
@@ -30,21 +41,30 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
 
-    status_by_name_path = df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros', 'inicio']].to_dict('index')
+    # --- NOVO: Remove espaços e padroniza as chaves do dicionário ---
+    status_by_name_path = {
+        tuple(str(v).strip() for v in k): {
+            'concluido': v_dict.get('concluido', 0) if pd.notna(v_dict.get('concluido')) else 0,
+            'previsto': v_dict.get('previsto', 0) if pd.notna(v_dict.get('previsto')) else 0,
+            'terceiros': v_dict.get('terceiros', 0) if pd.notna(v_dict.get('terceiros')) else 0,
+            'inicio': v_dict.get('inicio', '') if pd.notna(v_dict.get('inicio')) else ''
+        }
+        for k, v_dict in df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros', 'inicio']].to_dict('index').items()
+    }
 
     def natural_sort_key(hid):
-        return tuple(int(x) for x in hid.split('.'))
+        return tuple(int(x) for x in hid.split('.') if x.isdigit())
 
-    # --- ETAPA 2: PREPARAÇÃO DO DATAFRAME BASE (LINHAS) ---
-
-    etapas_df = df[df['hierarchy_path'].apply(lambda p: len(p) == 2 and p[0] in projetos_principais_numeros)].copy()
+    # DataFrame base
+    etapas_df = df[
+        df['hierarchy_path'].apply(lambda p: len(p) == 2 and p[0] in projetos_principais_numeros)
+    ].copy()
     etapas_df['sort_key'] = etapas_df['hierarchy_id'].apply(natural_sort_key)
     etapas_df.sort_values(by='sort_key', inplace=True)
     etapas_para_mostrar = etapas_df[['hierarchy_id', 'tarefa']].to_records(index=False)
 
     if etapas_para_mostrar.size == 0:
         return st.warning("Nenhuma etapa (nível 2) encontrada para os projetos.")
-
     # --- RENDERERS JAVASCRIPT ---
     barra_progress_renderer = JsCode("""
         function(params) {
@@ -80,7 +100,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                         const startDate = new Date(parts[2], parts[1] - 1, parts[0]);
                         startDate.setHours(0, 0, 0, 0);
                         if (today > startDate) { eGui.style.color = 'red'; } else { eGui.style.color = 'white'; }
-                    } else { c = 'white'; }
+                    } else { eGui.style.color = 'white'; }
                     eGui.style.fontWeight = 'bold';
                     return '!';
                 } else { eGui.style.color = 'white'; return '-'; }
@@ -91,10 +111,10 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 eGui.style.color = '#00ff07'; eGui.style.fontWeight = 'bold';
                 text_to_display = '✔';
             } else if (concluido_percent < previsto_val) {
-                eGui.style.backgroundColor = '#dc3545'; eGui.style.color = 'white';
+                eGui.style.backgroundColor = '#ff0000'; eGui.style.color = 'white';
                 text_to_display = concluido_percent + '%';
             } else if (concluido_percent > previsto_val) {
-                eGui.style.backgroundColor = "#0cc500"; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
+                eGui.style.backgroundColor = "#00df38"; eGui.style.color = 'white'; eGui.style.fontWeight = 'bold';
                 text_to_display = concluido_percent + '%';
             } else {
                 eGui.style.color = 'black'; eGui.style.fontWeight = 'bold';
@@ -104,8 +124,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         }
     """)
 
-    # --- ETAPA 3: LÓGICA CONDICIONAL PARA CONSTRUIR A TABELA ---
-
     column_defs = [
         {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 160, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
         {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 120, "cellRenderer": barra_progress_renderer}
@@ -114,75 +132,133 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     grid_data = []
 
     if view_selection == "Projetos":
-   
         projetos_structure = {
             "Plano de Trabalho": None,
             "Estudos Iniciais": ["Estudos Iniciais", "Visita Preliminar", "Topografia", "Planta Base da Área de Trabalho", "Sondagem", "Estudo Ambiental"],
             "Projetos Básicos": {
-                "Arquitetura": ["Projetos Básicos", "Projeto Arquitetônico", "Paisagismo", "Urbanismo", "Envio Engenahria"],
-                "Engenharia": ["Estrutural", "Hidrossanitário (Drenagem Reuso)", "PCI", "HVAC", "Gás", "Elétrico (CFRV Dados)", "Energia Renovável", "Orçamento"]
+                "Arquitetura": [
+                    "Arquitetura",
+                    "Projeto Arquitetônico",
+                    "Paisagismo",
+                    "Urbanismo",
+                    "Envio Engenahria"
+                ],
+                "Engenharia": {
+                    "Estrutural": None,
+                    "Hidrossanitário (Drenagem Reuso)": None,
+                    "Complementares": [
+                        "Complementares",
+                        "PCI",
+                        "HVAC",
+                        "AVAC", # Sua adição
+                        "Gás"
+                    ],
+                    "Elétrico (CFRV Dados)": None,
+                    "Elétrico (CFTV Dados)": None, # Sua adição
+                    "Energia Renovável": None,
+                    "Orçamento": None
+                }
             },
             "Projetos Executivos": {
-                "Arquitetura": ["Projetos Executivos", "Projeto Arquitetônico", "Paisagismo", "Urbanismo", "Entrega Orçamento"],
-                "Engenharia": ["Estrutural", "Impermeabilização", "Hidrossanitário (Drenagem Reuso)", "PCI", "HVAC", "Gás", "Elétrico (CFRV Dados)", "Energia Renovável", "Orçamento"],
+                "Arquitetura": [
+                    "Arquitetura",
+                    "Projeto Arquitetônico",
+                    "Paisagismo",
+                    "Urbanismo",
+                    "Entrega Orçamento"
+                ],
+                "Engenharia": {
+                    "Estrutural": None,
+                    "Impermeabilização": None,
+                    "Hidrossanitário (Drenagem Reuso)": None,
+                    "Reuso de Água": None, # Adicionado com base na sua planilha completa
+                    "Complementares": [
+                        "Complementares",
+                        "PCI",
+                        "HVAC",
+                        "AVAC", # Sua adição
+                        "Gás"
+                    ],
+                    "Elétrico (CFRV Dados)": None,
+                    "Elétrico (CFTV Dados)": None, # Sua adição
+                    "Energia Renovável": None,
+                    "Orçamento": None
+                },
                 "_folhas": ["Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"]
             },
             "Modelagem Econômica-Financeira": None,
-            "Modelagem Jurídico Regulatório": None,
+            "Modelagem Jurídico Regulatório": None
         }
 
-        def build_cols_from_structure(structure):
+        def build_cols_from_structure(structure, prefix=""):
             defs = []
             for header, content in structure.items():
+                current_field_prefix = f"{prefix}|{header}" if prefix else header
+                
                 if content is None:
-                    defs.append({"headerName": header, "field": header, "width": 80, "cellRenderer": cell_renderer_js})
+                    defs.append({"headerName": header, "field": current_field_prefix, "width": 80, "cellRenderer": cell_renderer_js})
                 elif isinstance(content, list):
-                    children = [{"headerName": name, "field": name, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"} for name in content]
+                    children = []
+                    # Lógica ajustada para tratar o primeiro item da lista como a tarefa-pai (resumo)
+                    for i, name in enumerate(content):
+                        if i == 0:
+                            # O primeiro item da lista representa a própria tarefa do grupo.
+                            # Portanto, seu field_id é o caminho para o grupo (current_field_prefix).
+                            field_id = current_field_prefix
+                        else:
+                            # Os itens seguintes são filhos do grupo.
+                            field_id = f"{current_field_prefix}|{name}"
+                        
+                        children.append({"headerName": name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
                     defs.append({"headerName": header, "children": children})
                 elif isinstance(content, dict):
                     sub_children = []
                     if "_folhas" in content:
-                        sub_children.extend([{"headerName": name, "field": name, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"} for name in content["_folhas"]])
+                        sub_children.extend([{"headerName": name, "field": f"{current_field_prefix}|{name}", "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"} for name in content["_folhas"]])
+                    
                     for sub_header, sub_content in content.items():
                         if sub_header != "_folhas":
-                            sub_children.extend(build_cols_from_structure({sub_header: sub_content}))
+                            sub_children.extend(build_cols_from_structure({sub_header: sub_content}, current_field_prefix))
+                    
                     defs.append({"headerName": header, "children": sub_children})
             return defs
         
         column_defs.extend(build_cols_from_structure(projetos_structure))
 
-        # --- INÍCIO DA CORREÇÃO ---
-        # Função recursiva para extrair TODOS os nomes de tarefas "folha" da estrutura.
-        def get_all_leaf_tasks(structure):
-            leaf_tasks = set()
-            for key, value in structure.items():
-                if value is None:
-                    leaf_tasks.add(key)
-                elif isinstance(value, list):
-                    leaf_tasks.update(value)
-                elif isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        if sub_key == "_folhas":
-                            leaf_tasks.update(sub_value)
-                        elif isinstance(sub_value, list):
-                            leaf_tasks.update(sub_value)
-            return list(leaf_tasks)
+        def get_all_leaf_fields(col_defs):
+            fields = []
+            for col_def in col_defs:
+                if "children" in col_def:
+                    fields.extend(get_all_leaf_fields(col_def["children"]))
+                elif "field" in col_def and col_def["field"] not in ["Etapa", "Progresso"]:
+                    fields.append(col_def["field"])
+            return fields
 
-        all_leaf_tasks = get_all_leaf_tasks(projetos_structure)
-        # --- FIM DA CORREÇÃO ---
+        all_leaf_fields = get_all_leaf_fields(column_defs)
         
         for etapa_id, etapa_name in etapas_para_mostrar:
             row_data = {'Etapa': etapa_name}
             progress_info = df[df['hierarchy_id'] == etapa_id][['concluido', 'previsto']].iloc[0].to_dict()
             row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
             
-            for task_name in all_leaf_tasks:
-                task_df = df_escopo[(df_escopo['tarefa'] == task_name) & (df_escopo['name_path'].apply(lambda p: p[1] == etapa_name if len(p) > 1 else False))]
-                if not task_df.empty:
-                    best_task = task_df.loc[task_df['concluido'].idxmax()]
-                    row_data[task_name] = {'concluido': best_task['concluido'], 'previsto': best_task['previsto'], 'terceiros': best_task['terceiros'], 'inicio': best_task['inicio']}
+            etapa_base_name_path = get_name_path(etapa_id.split('.'))
+
+            for field_id in all_leaf_fields:
+                relative_name_path = tuple(field_id.split('|'))
+                
+                # ####################################################################
+                # ##### CORREÇÃO PARTE 2: Ajuste na junção da chave de busca #########
+                # ####################################################################
+                if (len(etapa_base_name_path) > 1 and len(relative_name_path) > 0 and
+                        etapa_base_name_path[-1] == relative_name_path[0]):
+                    
+                    lookup_key = etapa_base_name_path + relative_name_path[1:]
                 else:
-                    row_data[task_name] = None
+                    lookup_key = etapa_base_name_path + relative_name_path
+                
+                status = status_by_name_path.get(lookup_key)
+                row_data[field_id] = status
+
             grid_data.append(row_data)
 
     else: # Lógica "Geral Detalhada"
@@ -233,7 +309,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     tabela_para_grid = pd.DataFrame(grid_data)
 
-    # --- ETAPA 4: RENDERIZAR A TABELA ---
     gridOptions = {
         "columnDefs": column_defs,
         "defaultColDef": {"resizable": True, "sortable": False, "cellStyle": {"textAlign": "center"}, "suppressMenu": True},
