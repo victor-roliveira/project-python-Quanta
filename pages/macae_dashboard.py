@@ -114,16 +114,23 @@ df = carregar_dados()
 
 st.markdown('<h1 style="margin-bottom: -30px;margin-top: 20px;">Acompanhamento Geral Macaé</h1>', unsafe_allow_html=True)
 
-aba_tabela, aba_atrasadas, aba_resumo = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"])
+tab_selecionada = st.radio(
+    "Navegação",
+    ["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"],
+    horizontal=True,
+    label_visibility="collapsed",
+    key='main_tabs' # Adiciona uma chave para manter o estado
+)
 
-with aba_tabela:
+
+if tab_selecionada == "📋 Tabela":
     if "selecao_tabela" not in st.session_state:
         st.session_state.selecao_tabela = None
     if "limpar_selecao_tabela" not in st.session_state:
         st.session_state.limpar_selecao_tabela = False
 
     limpar = st.session_state.limpar_selecao_tabela
-
+    
     colunas_para_remover = ["execucao", "terceiros"]
     df_tabela_geral = df.drop(columns=[col for col in colunas_para_remover if col in df.columns])
     linha_selecionada = mostrar_tabela(df_tabela_geral, limpar_selecao=limpar)
@@ -143,9 +150,13 @@ with aba_tabela:
         time.sleep(1)
         mostrar_grafico(df, str(selecao_valor))
 
-with aba_atrasadas:
+elif tab_selecionada == "🚨 Atrasos Por Área":
     mostrar_graficos_tarefas_atrasadas(df)
 
-with aba_resumo:
-    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / ❌ Não Possui /❕Possui Terceirizados / ❗ Não Iniciados Atrasados com Terceirizados / - Não Iniciados Internos</h3>", unsafe_allow_html=True)
-    mostrar_tabela_projetos_especificos_aggrid(df, str(selecao_valor))
+elif tab_selecionada == "ℹ️ Avanço Geral":
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / 🔃 Igualado / 🔄️ Não Iniciado / ❌ Não Possui / ! Terceirizados</h3>", unsafe_allow_html=True)
+    # A seleção de 'selecao_valor' da primeira aba não é necessária aqui,
+    # a menos que você queira que a seleção de uma aba afete a outra.
+    # Passando None para usar a lógica interna do componente.
+    mostrar_tabela_projetos_especificos_aggrid(df, None)
+# --- FIM DA CORREÇÃO ---
