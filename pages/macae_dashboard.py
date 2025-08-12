@@ -122,7 +122,6 @@ tab_selecionada = st.radio(
     key='main_tabs' # Adiciona uma chave para manter o estado
 )
 
-
 if tab_selecionada == "📋 Tabela":
     if "selecao_tabela" not in st.session_state:
         st.session_state.selecao_tabela = None
@@ -154,9 +153,5 @@ elif tab_selecionada == "🚨 Atrasos Por Área":
     mostrar_graficos_tarefas_atrasadas(df)
 
 elif tab_selecionada == "ℹ️ Avanço Geral":
-    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído / 🔃 Igualado / 🔄️ Não Iniciado / ❌ Não Possui / ! Terceirizados</h3>", unsafe_allow_html=True)
-    # A seleção de 'selecao_valor' da primeira aba não é necessária aqui,
-    # a menos que você queira que a seleção de uma aba afete a outra.
-    # Passando None para usar a lógica interna do componente.
+    st.markdown("<h6 style='text-align: left;'>LEGENDA: ✅ Concluído /❕Possui Terceirizados / ❗ Não Iniciados Atrasados com Terceirizados / - Não Iniciados Internos</h3>", unsafe_allow_html=True)
     mostrar_tabela_projetos_especificos_aggrid(df, None)
-# --- FIM DA CORREÇÃO ---

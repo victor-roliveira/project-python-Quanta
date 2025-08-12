@@ -105,7 +105,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                     return '!';
                 } else { eGui.style.color = 'white'; return '-'; }
             }
-            const terceiros_indicator = terceiros_val > 0 ? '!' : '';
+            const terceiros_indicator = terceiros_val > 0 ? ' !' : '';
             let text_to_display = '';
             if (concluido_percent === 100) {
                 eGui.style.color = '#00ff07'; eGui.style.fontWeight = 'bold';
