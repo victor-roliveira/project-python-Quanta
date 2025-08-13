@@ -89,9 +89,6 @@ def render_logout_button():
             """, unsafe_allow_html=True)
 
 def run_login_page():
-    """
-    Executa a lógica da página de login.
-    """
     authenticator = initialize_authenticator()
     authenticator.login()
 
