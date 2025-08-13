@@ -136,6 +136,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             "Plano de Trabalho": None,
             "Estudos Iniciais": ["Estudos Iniciais", "Visita Preliminar", "Topografia", "Planta Base da Área de Trabalho", "Sondagem", "Estudo Ambiental"],
             "Projetos Básicos": {
+                "_folhas": ["Projetos Básicos"], # Coluna de resumo para o grupo
                 "Arquitetura": [
                     "Arquitetura",
                     "Projeto Arquitetônico",
@@ -150,16 +151,17 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                         "Complementares",
                         "PCI",
                         "HVAC",
-                        "AVAC", # Sua adição
+                        "AVAC", 
                         "Gás"
                     ],
                     "Elétrico (CFRV Dados)": None,
-                    "Elétrico (CFTV Dados)": None, # Sua adição
+                    "Elétrico (CFTV Dados)": None, 
                     "Energia Renovável": None,
                     "Orçamento": None
                 }
             },
             "Projetos Executivos": {
+                "_folhas": ["Projetos Executivos", "Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"],
                 "Arquitetura": [
                     "Arquitetura",
                     "Projeto Arquitetônico",
@@ -171,55 +173,46 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                     "Estrutural": None,
                     "Impermeabilização": None,
                     "Hidrossanitário (Drenagem Reuso)": None,
-                    "Reuso de Água": None, # Adicionado com base na sua planilha completa
+                    "Reuso de Água": None, 
                     "Complementares": [
                         "Complementares",
                         "PCI",
                         "HVAC",
-                        "AVAC", # Sua adição
+                        "AVAC", 
                         "Gás"
                     ],
                     "Elétrico (CFRV Dados)": None,
-                    "Elétrico (CFTV Dados)": None, # Sua adição
+                    "Elétrico (CFTV Dados)": None,
                     "Energia Renovável": None,
                     "Orçamento": None
-                },
-                "_folhas": ["Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"]
+                }
             },
             "Modelagem Econômica-Financeira": None,
             "Modelagem Jurídico Regulatório": None
         }
 
+        # --- INÍCIO DA CORREÇÃO ---
         def build_cols_from_structure(structure, prefix=""):
             defs = []
             for header, content in structure.items():
                 current_field_prefix = f"{prefix}|{header}" if prefix else header
-                
                 if content is None:
                     defs.append({"headerName": header, "field": current_field_prefix, "width": 80, "cellRenderer": cell_renderer_js})
                 elif isinstance(content, list):
                     children = []
-                    # Lógica ajustada para tratar o primeiro item da lista como a tarefa-pai (resumo)
-                    for i, name in enumerate(content):
-                        if i == 0:
-                            # O primeiro item da lista representa a própria tarefa do grupo.
-                            # Portanto, seu field_id é o caminho para o grupo (current_field_prefix).
-                            field_id = current_field_prefix
-                        else:
-                            # Os itens seguintes são filhos do grupo.
-                            field_id = f"{current_field_prefix}|{name}"
-                        
+                    for name in content:
+                        field_id = current_field_prefix if name == header else f"{current_field_prefix}|{name}"
                         children.append({"headerName": name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
                     defs.append({"headerName": header, "children": children})
                 elif isinstance(content, dict):
                     sub_children = []
                     if "_folhas" in content:
-                        sub_children.extend([{"headerName": name, "field": f"{current_field_prefix}|{name}", "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"} for name in content["_folhas"]])
-                    
+                        for name in content["_folhas"]:
+                            field_id = current_field_prefix if name == header else f"{current_field_prefix}|{name}"
+                            sub_children.append({"headerName": name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
                     for sub_header, sub_content in content.items():
                         if sub_header != "_folhas":
                             sub_children.extend(build_cols_from_structure({sub_header: sub_content}, current_field_prefix))
-                    
                     defs.append({"headerName": header, "children": sub_children})
             return defs
         
@@ -241,25 +234,15 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             progress_info = df[df['hierarchy_id'] == etapa_id][['concluido', 'previsto']].iloc[0].to_dict()
             row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
             
-            etapa_base_name_path = get_name_path(etapa_id.split('.'))
+            etapa_base_name_path = tuple(id_to_name_map.get('.'.join(etapa_id.split('.')[:i+1])) for i in range(2))
 
             for field_id in all_leaf_fields:
                 relative_name_path = tuple(field_id.split('|'))
-                
-                # ####################################################################
-                # ##### CORREÇÃO PARTE 2: Ajuste na junção da chave de busca #########
-                # ####################################################################
-                if (len(etapa_base_name_path) > 1 and len(relative_name_path) > 0 and
-                        etapa_base_name_path[-1] == relative_name_path[0]):
-                    
-                    lookup_key = etapa_base_name_path + relative_name_path[1:]
-                else:
-                    lookup_key = etapa_base_name_path + relative_name_path
-                
+                lookup_key = etapa_base_name_path + relative_name_path
                 status = status_by_name_path.get(lookup_key)
                 row_data[field_id] = status
-
             grid_data.append(row_data)
+        # --- FIM DA CORREÇÃO ---
 
     else: # Lógica "Geral Detalhada"
         template_etapa_id = etapas_para_mostrar[0][0]
