@@ -110,7 +110,7 @@ st.markdown('<h1 style="margin-bottom: -40px;margin-top: 20px;">Acompanhamento G
 col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
 
 # Abas de navegação
-aba_tabela, aba_atrasadas, aba_geral = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"])
+aba_tabela, aba_atrasadas = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área"])
 
 with aba_tabela:
     if "selecao_tabela" not in st.session_state:
@@ -136,5 +136,5 @@ with aba_tabela:
 with aba_atrasadas:
     mostrar_graficos_tarefas_atrasadas(df) 
 
-with aba_geral:
-    mostrar_tabela_projetos_especificos_aggrid_marica(df)
+#with aba_geral:
+#    mostrar_tabela_projetos_especificos_aggrid_marica(df)
