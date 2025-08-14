@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.express as px
+import textwrap
 
 def mostrar_grafico(df, selecao_valor):
     df = df.copy()
@@ -32,15 +33,21 @@ def mostrar_grafico(df, selecao_valor):
     
     altura_por_item = 10
     altura_total = max(230, len(df_plot) * altura_por_item)
-    if len(df_plot) > 10:
-        max_chars = 8
-    else:
-        max_chars = 30
+    
+    # Define tamanho fixo para abreviação
+    max_chars = 15  
 
-    # Aplica a abreviação condicional
-    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(
-        lambda x: x if len(x) <= max_chars else x[:max_chars] + "..."
-    )
+    # Abrevia preservando início e fim
+    def abreviar_nome(nome, max_chars):
+        if len(nome) <= max_chars:
+            return nome
+        metade = max_chars // 2 - 2
+        return nome[:metade] + "..." + nome[-metade:]
+
+    df_plot["tarefa_curta"] = df_plot["tarefa"].apply(lambda x: abreviar_nome(x, max_chars))
+
+    # Caso queira quebrar linha automática no eixo X:
+    df_plot["tarefa_curta"] = df_plot["tarefa_curta"].apply(lambda x: "\n".join(textwrap.wrap(x, 12)))
 
     fig = px.bar(
         df_plot, x="tarefa_curta", y=["previsto", "concluido"],

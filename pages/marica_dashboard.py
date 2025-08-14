@@ -14,12 +14,13 @@ df = pd.read_excel("013A.xlsx")
 df = df[[
     "D - N° Guia", "E - Nome Da Tarefa", "H - Conclusão",
     "% Ideal", "C - % Concluída",
-    "K - Responsável", "L - Recurso", "B - Status"
+    "K - Responsável", "L - Recurso", "B - Status", 
+    "Q - Equipe"
 ]].copy()
 
 df.columns = [
     "hierarquia", "tarefa", "conclusao", "previsto", "concluido",
-    "responsavel 1", "responsavel 2", "execucao"
+    "responsavel 1", "responsavel 2", "execucao", "equipe"
 ]
 
 df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
