@@ -197,19 +197,19 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             for header, content in structure.items():
                 current_field_prefix = f"{prefix}|{header}" if prefix else header
                 if content is None:
-                    defs.append({"headerName": header, "field": current_field_prefix, "width": 80, "cellRenderer": cell_renderer_js})
+                    defs.append({"headerName": header, "field": current_field_prefix, "width": 50, "cellRenderer": cell_renderer_js})
                 elif isinstance(content, list):
                     children = []
                     for name in content:
                         field_id = current_field_prefix if name == header else f"{current_field_prefix}|{name}"
-                        children.append({"headerName": name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
+                        children.append({"headerName": name, "field": field_id, "width": 45, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
                     defs.append({"headerName": header, "children": children})
                 elif isinstance(content, dict):
                     sub_children = []
                     if "_folhas" in content:
                         for name in content["_folhas"]:
                             field_id = current_field_prefix if name == header else f"{current_field_prefix}|{name}"
-                            sub_children.append({"headerName": name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
+                            sub_children.append({"headerName": name, "field": field_id, "width": 45, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
                     for sub_header, sub_content in content.items():
                         if sub_header != "_folhas":
                             sub_children.extend(build_cols_from_structure({sub_header: sub_content}, current_field_prefix))
@@ -270,7 +270,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                     if children:
                         children_defs.append({"headerName": child_name, "children": children})
                 else:
-                    children_defs.append({"headerName": child_name, "field": field_id, "width": 70, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
+                    children_defs.append({"headerName": child_name, "field": field_id, "width": 45, "cellRenderer": cell_renderer_js, "headerClass": "vertical-header"})
             return children_defs
 
         template_name_path_base = tuple(id_to_name_map.get('.'.join(template_etapa_id.split('.')[:i+1])) for i in range(2))

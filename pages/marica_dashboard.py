@@ -12,14 +12,14 @@ protect_page()
 df = pd.read_excel("013A.xlsx")
 
 df = df[[
-    "D - N° Guia", "E - Nome Da Tarefa", "H - Conclusão",
+    "D - N° Guia", "E - Nome Da Tarefa", "G - Inicio","H - Conclusão",
     "% Ideal", "C - % Concluída",
     "K - Responsável", "L - Recurso", "B - Status", 
     "Q - Equipe"
 ]].copy()
 
 df.columns = [
-    "hierarquia", "tarefa", "conclusao", "previsto", "concluido",
+    "hierarquia", "tarefa", "inicio","conclusao", "previsto", "concluido",
     "responsavel 1", "responsavel 2", "execucao", "equipe"
 ]
 

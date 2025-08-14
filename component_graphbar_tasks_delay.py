@@ -42,7 +42,7 @@ def mostrar_graficos_tarefas_atrasadas(df):
         height=400,
         color_discrete_map={
             "Atrasadas": "#ff0000",
-            "Concluídas": "#109100"
+            "Concluídas": "#00ff13"
         }
     )
 
