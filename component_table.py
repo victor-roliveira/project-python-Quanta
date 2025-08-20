@@ -175,7 +175,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         fit_columns_on_grid_load=True,
-        update_mode='SELECTION_CHANGED',
+        update_mode='MODEL_CHANGED',
         enable_row_selection=True,
         selection_mode='single',
         use_checkbox=False,
@@ -188,7 +188,7 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         },
     )
 
-    selected = response.selected_rows
+    selected = response.get("selected_rows")
 
     if selected is not None and not selected.empty:
         hierarquia = selected.iloc[0].get("hierarquia")
