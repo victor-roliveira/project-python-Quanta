@@ -233,7 +233,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
         all_leaf_fields = get_all_leaf_fields(column_defs)
         
-        # --- ALTERAÇÃO 3: Popular os dados de 'Início' e 'Término' para a visualização 'Projetos' ---
         for etapa_id, etapa_name in etapas_para_mostrar:
             row_data = {'Etapa': etapa_name}
             
