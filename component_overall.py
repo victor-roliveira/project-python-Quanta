@@ -6,19 +6,20 @@ import json
 def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
     df = df_original.copy()
 
-    # --- NOVO: Normaliza colunas para evitar falhas de correspondência ---
     df['tarefa'] = df['tarefa'].astype(str).str.strip()
     df['hierarchy_path'] = df['hierarchy_path'].apply(
         lambda p: [str(i).strip() for i in p] if isinstance(p, list) else []
     )
-    # Garante que valores nulos sejam zeros nas métricas
+
     for col in ['concluido', 'previsto', 'terceiros']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    
     if 'inicio' in df.columns:
-        df['inicio'] = df['inicio'].fillna('')
+        df['inicio'] = pd.to_datetime(df['inicio'], errors='coerce', dayfirst=True).dt.strftime('%d/%m/%Y').fillna('')
+    if 'termino' in df.columns:
+        df['termino'] = pd.to_datetime(df['termino'], errors='coerce', dayfirst=True).dt.strftime('%d/%m/%Y').fillna('')
 
-    # Filtro de visualização
     view_selection = st.radio(
         "Selecione a Visualização:",
         ["Geral Detalhada", "Projetos"],
@@ -40,17 +41,17 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         return tuple(id_to_name_map.get('.'.join(path_list[:i+1]), '') for i in range(len(path_list)))
 
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
-
-    # --- NOVO: Remove espaços e padroniza as chaves do dicionário ---
+    
+    # Adicionando 'termino' ao dicionário para consistência, caso seja usado no futuro
+    status_columns = ['concluido', 'previsto', 'terceiros', 'inicio', 'termino']
     status_by_name_path = {
         tuple(str(v).strip() for v in k): {
-            'concluido': v_dict.get('concluido', 0) if pd.notna(v_dict.get('concluido')) else 0,
-            'previsto': v_dict.get('previsto', 0) if pd.notna(v_dict.get('previsto')) else 0,
-            'terceiros': v_dict.get('terceiros', 0) if pd.notna(v_dict.get('terceiros')) else 0,
-            'inicio': v_dict.get('inicio', '') if pd.notna(v_dict.get('inicio')) else ''
+            col: v_dict.get(col, 0 if col != 'inicio' and col != 'termino' else '')
+            for col in status_columns
         }
-        for k, v_dict in df_escopo.set_index('name_path')[['concluido', 'previsto', 'terceiros', 'inicio']].to_dict('index').items()
+        for k, v_dict in df_escopo.set_index('name_path')[status_columns].to_dict('index').items()
     }
+
 
     def natural_sort_key(hid):
         return tuple(int(x) for x in hid.split('.') if x.isdigit())
@@ -123,75 +124,78 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             return text_to_display + terceiros_indicator;
         }
     """)
-
+    
+    # --- ALTERAÇÃO 2: Adicionar as colunas 'Início' e 'Término' ---
     column_defs = [
         {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 160, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
-        {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 120, "cellRenderer": barra_progress_renderer}
+        {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 90, "cellRenderer": barra_progress_renderer},
+        # Colunas adicionadas
+        {"headerName": "Início", "field": "Início", "pinned": "left", "width": 90},
+        {"headerName": "Término", "field": "Término", "pinned": "left", "width": 90},
     ]
     
     grid_data = []
 
     if view_selection == "Projetos":
         projetos_structure = {
-            "Plano de Trabalho": None,
-            "Estudos Iniciais": ["Estudos Iniciais", "Visita Preliminar", "Topografia", "Planta Base da Área de Trabalho", "Sondagem", "Estudo Ambiental"],
-            "Projetos Básicos": {
-                "_folhas": ["Projetos Básicos"], # Coluna de resumo para o grupo
-                "Arquitetura": [
-                    "Arquitetura",
-                    "Projeto Arquitetônico",
-                    "Paisagismo",
-                    "Urbanismo",
-                    "Envio Engenahria"
-                ],
-                "Engenharia": {
-                    "Estrutural": None,
-                    "Hidrossanitário (Drenagem Reuso)": None,
-                    "Complementares": [
-                        "Complementares",
-                        "PCI",
-                        "HVAC",
-                        "AVAC", 
-                        "Gás"
-                    ],
-                    "Elétrico (CFRV Dados)": None,
-                    "Elétrico (CFTV Dados)": None, 
-                    "Energia Renovável": None,
-                    "Orçamento": None
-                }
-            },
-            "Projetos Executivos": {
-                "_folhas": ["Projetos Executivos", "Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"],
-                "Arquitetura": [
-                    "Arquitetura",
-                    "Projeto Arquitetônico",
-                    "Paisagismo",
-                    "Urbanismo",
-                    "Entrega Orçamento"
-                ],
-                "Engenharia": {
-                    "Estrutural": None,
-                    "Impermeabilização": None,
-                    "Hidrossanitário (Drenagem Reuso)": None,
-                    "Reuso de Água": None, 
-                    "Complementares": [
-                        "Complementares",
-                        "PCI",
-                        "HVAC",
-                        "AVAC", 
-                        "Gás"
-                    ],
-                    "Elétrico (CFRV Dados)": None,
-                    "Elétrico (CFTV Dados)": None,
-                    "Energia Renovável": None,
-                    "Orçamento": None
-                }
-            },
-            "Modelagem Econômica-Financeira": None,
-            "Modelagem Jurídico Regulatório": None
+             "Plano de Trabalho": None,
+             "Estudos Iniciais": ["Estudos Iniciais", "Visita Preliminar", "Topografia", "Planta Base da Área de Trabalho", "Sondagem", "Estudo Ambiental"],
+             "Projetos Básicos": {
+                 "_folhas": ["Projetos Básicos"], 
+                 "Arquitetura": [
+                     "Arquitetura",
+                     "Projeto Arquitetônico",
+                     "Paisagismo",
+                     "Urbanismo",
+                     "Envio Engenahria"
+                 ],
+                 "Engenharia": {
+                     "Estrutural": None,
+                     "Hidrossanitário (Drenagem Reuso)": None,
+                     "Complementares": [
+                         "Complementares",
+                         "PCI",
+                         "HVAC",
+                         "AVAC", 
+                         "Gás"
+                     ],
+                     "Elétrico (CFRV Dados)": None,
+                     "Elétrico (CFTV Dados)": None, 
+                     "Energia Renovável": None,
+                     "Orçamento": None
+                 }
+             },
+             "Projetos Executivos": {
+                 "_folhas": ["Projetos Executivos", "Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"],
+                 "Arquitetura": [
+                     "Arquitetura",
+                     "Projeto Arquitetônico",
+                     "Paisagismo",
+                     "Urbanismo",
+                     "Entrega Orçamento"
+                 ],
+                 "Engenharia": {
+                     "Estrutural": None,
+                     "Impermeabilização": None,
+                     "Hidrossanitário (Drenagem Reuso)": None,
+                     "Reuso de Água": None, 
+                     "Complementares": [
+                         "Complementares",
+                         "PCI",
+                         "HVAC",
+                         "AVAC", 
+                         "Gás"
+                     ],
+                     "Elétrico (CFRV Dados)": None,
+                     "Elétrico (CFTV Dados)": None,
+                     "Energia Renovável": None,
+                     "Orçamento": None
+                 }
+             },
+             "Modelagem Econômica-Financeira": None,
+             "Modelagem Jurídico Regulatório": None
         }
 
-        # --- INÍCIO DA CORREÇÃO ---
         def build_cols_from_structure(structure, prefix=""):
             defs = []
             for header, content in structure.items():
@@ -223,16 +227,26 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
             for col_def in col_defs:
                 if "children" in col_def:
                     fields.extend(get_all_leaf_fields(col_def["children"]))
-                elif "field" in col_def and col_def["field"] not in ["Etapa", "Progresso"]:
+                elif "field" in col_def and col_def["field"] not in ["Etapa", "Progresso", "Início", "Término"]:
                     fields.append(col_def["field"])
             return fields
 
         all_leaf_fields = get_all_leaf_fields(column_defs)
         
+        # --- ALTERAÇÃO 3: Popular os dados de 'Início' e 'Término' para a visualização 'Projetos' ---
         for etapa_id, etapa_name in etapas_para_mostrar:
             row_data = {'Etapa': etapa_name}
-            progress_info = df[df['hierarchy_id'] == etapa_id][['concluido', 'previsto']].iloc[0].to_dict()
+            
+            # Busca todas as informações da etapa de uma só vez
+            etapa_info = df.loc[df['hierarchy_id'] == etapa_id, ['concluido', 'previsto', 'inicio', 'termino']].iloc[0]
+
+            # Popula Progresso
+            progress_info = etapa_info[['concluido', 'previsto']].to_dict()
             row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
+            
+            # Popula Início e Término
+            row_data['Início'] = etapa_info.get('inicio', '')
+            row_data['Término'] = etapa_info.get('termino', '')
             
             etapa_base_name_path = tuple(id_to_name_map.get('.'.join(etapa_id.split('.')[:i+1])) for i in range(2))
 
@@ -242,7 +256,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 status = status_by_name_path.get(lookup_key)
                 row_data[field_id] = status
             grid_data.append(row_data)
-        # --- FIM DA CORREÇÃO ---
 
     else: # Lógica "Geral Detalhada"
         template_etapa_id = etapas_para_mostrar[0][0]
@@ -276,12 +289,21 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         template_name_path_base = tuple(id_to_name_map.get('.'.join(template_etapa_id.split('.')[:i+1])) for i in range(2))
         column_defs.extend(build_nested_cols(template_etapa_id, template_name_path_base))
 
-        etapa_progress_map = df[df['hierarchy_path'].apply(len) == 2].set_index('hierarchy_id')[['concluido', 'previsto']].to_dict('index')
+        # --- ALTERAÇÃO 4: Popular os dados de 'Início' e 'Término' para a visualização 'Geral Detalhada' ---
+        # Criar um mapa com todas as informações necessárias
+        etapa_info_map = df[df['hierarchy_path'].apply(len) == 2].set_index('hierarchy_id')[['concluido', 'previsto', 'inicio', 'termino']].to_dict('index')
+
         for etapa_id, etapa_name in etapas_para_mostrar:
-            row_data = {'Etapa': etapa_name, 'Progresso': None}
-            progress_info = etapa_progress_map.get(etapa_id)
-            if progress_info:
-                row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
+            # Inicializa os campos, incluindo os novos
+            row_data = {'Etapa': etapa_name, 'Progresso': None, 'Início': '', 'Término': ''}
+            
+            etapa_info = etapa_info_map.get(etapa_id)
+            if etapa_info:
+                # Popula Progresso, Início e Término
+                row_data['Progresso'] = json.dumps({'concluido': round(etapa_info.get('concluido', 0) * 100), 'previsto': etapa_info.get('previsto', 0)})
+                row_data['Início'] = etapa_info.get('inicio', '')
+                row_data['Término'] = etapa_info.get('termino', '')
+            
             etapa_base_name_path = tuple(id_to_name_map.get('.'.join(etapa_id.split('.')[:i+1])) for i in range(2))
             for rel_name_path in leaf_name_paths_relative:
                 lookup_key = etapa_base_name_path + rel_name_path
@@ -302,7 +324,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         tabela_para_grid, gridOptions=gridOptions, height=700, allow_unsafe_jscode=True,
         enable_enterprise_modules=True,
         custom_css={
-            ".ag-cell": {"font-size": "10px !important", "border-left": "2px solid black", "border-right": "2px solid black", "border-bottom": "2px solid black"},
+            ".ag-cell": {"padding": "0px !important" , "font-size": "10px !important", "border-left": "2px solid black", "border-right": "2px solid black", "border-bottom": "2px solid black"},
             ".ag-header-cell-text, .ag-header-group-cell-label": {"font-size": "10px !important", "white-space": "normal", "line-height": "1.3"},
             ".vertical-header .ag-header-cell-label": {"writing-mode": "vertical-rl", "transform": "rotate(180deg)", "display": "flex", "align-items": "center", "justify-content": "center", "padding-bottom": "5px"},
             ".ag-header-cell-menu-button, .ag-header-group-cell-menu-button": {"display": "none !important"}
