@@ -58,7 +58,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data 
+@st.cache_data
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
@@ -78,10 +78,11 @@ def carregar_dados():
         "Terceirizadas": "terceiros"
     }
 
-    # Filtra o DataFrame para conter apenas as colunas necessárias e as renomeia.
     df_filtrado = df.rename(columns=lambda col: col.strip())[list(colunas_necessarias.keys())].copy()
     df_filtrado.rename(columns=colunas_necessarias, inplace=True)
     df = df_filtrado
+
+    df['hierarquia'] = df['hierarquia'].astype(str)
     
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
     df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
@@ -96,7 +97,7 @@ def carregar_dados():
     df["inicio"] = pd.to_datetime(df["inicio"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
     df["termino"] = pd.to_datetime(df["termino"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
     
-    df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
+    df["hierarchy_path"] = df["hierarquia"].apply(lambda x: x.split("."))
 
     df["barra_info"] = df.apply(lambda row: {
         "concluido": round(row["concluido"] * 100),
@@ -122,6 +123,8 @@ tab_selecionada = st.radio(
     key='main_tabs' # Adiciona uma chave para manter o estado
 )
 
+# Substitua todo o bloco 'if tab_selecionada == "📋 Tabela":' por este
+
 if tab_selecionada == "📋 Tabela":
     if "selecao_tabela" not in st.session_state:
         st.session_state.selecao_tabela = None
@@ -137,18 +140,23 @@ if tab_selecionada == "📋 Tabela":
     if limpar:
         st.session_state.limpar_selecao_tabela = False
 
+    # A lógica de atualização do estado da sessão foi mantida
     if linha_selecionada == 0:
         st.session_state.selecao_tabela = None
     elif linha_selecionada:
         st.session_state.selecao_tabela = linha_selecionada
 
     selecao_valor = st.session_state.get("selecao_tabela")
-    selecao_valor = selecao_valor if selecao_valor else "Todos"
+
+    if selecao_valor in ["0", "0.0"]:
+        selecao_para_grafico = "Todos"
+    else:
+        selecao_para_grafico = selecao_valor if selecao_valor else "Todos"
     
     with st.spinner("Carregando gráfico, por favor aguarde..."):
         time.sleep(1)
-        mostrar_grafico(df, str(selecao_valor))
-
+        # Passa a variável corrigida para a função do gráfico
+        mostrar_grafico(df, str(selecao_para_grafico))
 elif tab_selecionada == "🚨 Atrasos Por Área":
     mostrar_graficos_tarefas_atrasadas(df)
 
