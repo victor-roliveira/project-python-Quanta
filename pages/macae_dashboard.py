@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
 import time
+import io  # Importado para o debug
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 from auth_session import protect_page
 from component_overall import mostrar_tabela_projetos_especificos_aggrid
 
-st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png",layout="wide")
+st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png", layout="wide")
 st.logo("logo-quanta-oficial.png", size="large")
 
 protect_page()
@@ -23,7 +24,7 @@ st.markdown("""
             padding-top: 0px !important;
             padding-bottom: 0px !important;
         }
-            
+        
         /* Estilos da Sidebar */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 {
             background-color: #333333;
@@ -81,7 +82,7 @@ def carregar_dados():
     df_filtrado = df.rename(columns=lambda col: col.strip())[list(colunas_necessarias.keys())].copy()
     df_filtrado.rename(columns=colunas_necessarias, inplace=True)
     df = df_filtrado
-
+    
     df['hierarquia'] = df['hierarquia'].astype(str)
     
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
@@ -113,6 +114,24 @@ def carregar_dados():
 
 df = carregar_dados()
 
+# ======================= PAINEL DE DEBUG - PASSO 1 =======================
+with st.expander("🕵️ DEBUG - PASSO 1: Verificação do DataFrame Principal (df)"):
+    st.write("Tipos de dados (dtypes) do DataFrame carregado:")
+    
+    # Captura a saída de df.info() para exibir no Streamlit
+    buffer = io.StringIO()
+    df.info(buf=buffer)
+    s = buffer.getvalue()
+    st.text(s)
+
+    st.write("Primeiras 5 linhas do DataFrame:")
+    st.dataframe(df.head())
+    
+    st.write("Detalhes da coluna 'hierarquia':")
+    st.write(f"- Tipo de dado: {df['hierarquia'].dtype}")
+    st.write(f"- Valores únicos (amostra): {df['hierarquia'].unique()[:5]}")
+# =========================================================================
+
 st.markdown('<h1 style="margin-bottom: -30px;margin-top: 20px;">Acompanhamento Geral Macaé</h1>', unsafe_allow_html=True)
 
 tab_selecionada = st.radio(
@@ -120,10 +139,8 @@ tab_selecionada = st.radio(
     ["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"],
     horizontal=True,
     label_visibility="collapsed",
-    key='main_tabs' # Adiciona uma chave para manter o estado
+    key='main_tabs'
 )
-
-# Substitua todo o bloco 'if tab_selecionada == "📋 Tabela":' por este
 
 if tab_selecionada == "📋 Tabela":
     if "selecao_tabela" not in st.session_state:
@@ -137,10 +154,15 @@ if tab_selecionada == "📋 Tabela":
     df_tabela_geral = df.drop(columns=[col for col in colunas_para_remover if col in df.columns])
     linha_selecionada = mostrar_tabela(df_tabela_geral, limpar_selecao=limpar)
 
+    # ======================= PAINEL DE DEBUG - PASSO 2 =======================
+    with st.expander("🕵️ DEBUG - PASSO 2: Verificação da Saída do Componente Tabela"):
+        st.write(f"Valor bruto retornado por mostrar_tabela: `{linha_selecionada}`")
+        st.write(f"Tipo do valor: `{type(linha_selecionada)}`")
+    # =========================================================================
+
     if limpar:
         st.session_state.limpar_selecao_tabela = False
 
-    # A lógica de atualização do estado da sessão foi mantida
     if linha_selecionada == 0:
         st.session_state.selecao_tabela = None
     elif linha_selecionada:
@@ -153,10 +175,16 @@ if tab_selecionada == "📋 Tabela":
     else:
         selecao_para_grafico = selecao_valor if selecao_valor else "Todos"
     
+    # ======================= PAINEL DE DEBUG - PASSO 3 =======================
+    with st.expander("🕵️ DEBUG - PASSO 3: Verificação da Entrada do Componente Gráfico"):
+        st.write(f"Valor final enviado para mostrar_grafico: `{selecao_para_grafico}`")
+        st.write(f"Tipo do valor: `{type(selecao_para_grafico)}`")
+    # =========================================================================
+    
     with st.spinner("Carregando gráfico, por favor aguarde..."):
         time.sleep(1)
-        # Passa a variável corrigida para a função do gráfico
         mostrar_grafico(df, str(selecao_para_grafico))
+
 elif tab_selecionada == "🚨 Atrasos Por Área":
     mostrar_graficos_tarefas_atrasadas(df)
 
