@@ -1,4 +1,6 @@
+import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+import json # Importe a biblioteca json
 
 def mostrar_tabela(df_original, limpar_selecao=False):
     df = df_original.copy()
@@ -13,7 +15,84 @@ def mostrar_tabela(df_original, limpar_selecao=False):
     colunas.insert(colunas.index("tarefa"), "tarefa_status")
     df = df[colunas]
 
+    # ==================================================================
+    # ✨ CORREÇÃO (PASSO 1 - PYTHON) ✨
+    # Converte a coluna que contém listas para uma string em formato JSON.
+    # Isso a torna "hashable" para o Python e preparara para o JavaScript.
+    # ==================================================================
+    if 'hierarchy_path' in df.columns and not pd.api.types.is_string_dtype(df['hierarchy_path']):
+         df['hierarchy_path'] = df['hierarchy_path'].apply(json.dumps)
+    # ==================================================================
+
     gb = GridOptionsBuilder.from_dataframe(df)
+
+    # ==================================================================
+    # ✨ CORREÇÃO (PASSO 2 - JAVASCRIPT) ✨
+    # O JsCode agora usa JSON.parse() para converter a string de volta
+    # para um array, que é o formato que a função treeData precisa.
+    # ==================================================================
+    get_data_path_jscode = JsCode("""
+        function(data) {
+            try {
+                // Tenta fazer o parse da string JSON para um array
+                return JSON.parse(data.hierarchy_path);
+            } catch (e) {
+                // Se falhar (ex: dado já é um array ou é inválido), retorna um array vazio
+                return [];
+            }
+        }
+    """)
+    # ==================================================================
+
+    # Também é preciso atualizar os outros JavasScript que usam `hierarchy_path`
+    on_row_group_opened_jscode = JsCode("""
+        function(params) {
+            const api = params.api;
+            let expandedPaths = [];
+
+            api.forEachNode(function(node) {
+                if (node.expanded && node.data && node.data.hierarchy_path) {
+                    try {
+                       expandedPaths.push(JSON.parse(node.data.hierarchy_path));
+                    } catch(e){
+                        // Ignora se não for um JSON válido
+                    }
+                }
+            });
+
+            if (expandedPaths.length === 0) {
+                window.activeBranchPath = null;
+            } else {
+                expandedPaths.sort(function(a, b) {
+                    return b.length - a.length;
+                });
+                window.activeBranchPath = expandedPaths[0];
+            }
+
+            api.redrawRows();
+        }
+    """)
+
+    get_row_style_jscode = JsCode("""
+        function(params) {
+            try {
+                // Sempre fazer o parse do caminho
+                const itemPath = JSON.parse(params.data.hierarchy_path);
+
+                if (!window.activeBranchPath || window.activeBranchPath.length === 0) {
+                    return {};
+                }
+
+                const path = window.activeBranchPath;
+                const isInBranch = path.every((val, idx) => itemPath[idx] === val);
+
+                return isInBranch ? { opacity: 1.0 } : { opacity: 0.1 };
+            } catch(e) {
+                // Se houver erro no parse, aplica o estilo padrão de opacidade
+                return { opacity: 0.1 };
+            }
+        }
+    """)
 
     gb.configure_grid_options(
         treeData=True,
@@ -22,15 +101,8 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         rowSelection='single',
         suppressRowClickSelection=False,
         rowStyle={"cursor": "pointer"},
-        getDataPath=JsCode("function(data) { return data.hierarchy_path; }"),
-        getRowClass=JsCode("""
-            function(params) {
-                if (params.node.isSelected()) {
-                    return 'selected-row';
-                }
-                return '';
-            }
-        """),
+        getDataPath=get_data_path_jscode, # <-- Usando o novo JsCode
+        getRowClass=JsCode("function(params) { if (params.node.isSelected()) { return 'selected-row'; } return ''; }"),
         autoGroupColumnDef={
             "headerName": "Tópico",
             "field": "hierarquia",
@@ -43,48 +115,8 @@ def mostrar_tabela(df_original, limpar_selecao=False):
             "maxWidth": 150,
             "cellStyle": {"textAlign": "center"}
         },
-        onRowGroupOpened=JsCode("""
-            function(params) {
-                const api = params.api;
-                let expandedPaths = [];
-
-                api.forEachNode(function(node) {
-                    if (node.expanded && node.data && node.data.hierarchy_path) {
-                        expandedPaths.push(node.data.hierarchy_path);
-                    }
-                });
-
-                if (expandedPaths.length === 0) {
-                    window.activeBranchPath = null;
-                } else {
-                    // Ordena pelos mais profundos
-                    expandedPaths.sort(function(a, b) {
-                        return b.length - a.length;
-                    });
-
-                    // Define o mais profundo como foco visual
-                    window.activeBranchPath = expandedPaths[0];
-                }
-
-                api.redrawRows();
-            }
-        """),
-        getRowStyle=JsCode("""
-            function(params) {
-                const itemPath = params.data.hierarchy_path;
-
-                if (!window.activeBranchPath || window.activeBranchPath.length === 0) {
-                    return {};
-                }
-
-                const path = window.activeBranchPath;
-
-                // Checa se item faz parte do ramo do caminho mais profundo
-                const isInBranch = path.every((val, idx) => itemPath[idx] === val);
-
-                return isInBranch ? { opacity: 1.0 } : { opacity: 0.1 };
-            }
-        """)
+        onRowGroupOpened=on_row_group_opened_jscode, # <-- Usando o novo JsCode
+        getRowStyle=get_row_style_jscode # <-- Usando o novo JsCode
     )
 
     gb.configure_columns(["hierarquia", "hierarchy_path", "tarefa"], hide=True)
@@ -108,37 +140,25 @@ def mostrar_tabela(df_original, limpar_selecao=False):
 
     barra_progress_renderer = JsCode("""
     function(params) {
+        if (!params.value) return '';
         let data;
         try {
             data = JSON.parse(params.value);
         } catch {
             data = { concluido: 0, previsto: 0 };
         }
-
         const concluido = data.concluido || 0;
         const previsto = data.previsto || 0;
-
         if (concluido === 100) {
-            params.eGridCell.innerHTML = `
-                <div style="text-align: center; font-weight: bold; color: #2ebe00; margin-top: 2px;">
-                    Finalizado ✅
-                </div>
-            `;
+            params.eGridCell.innerHTML = `<div style="text-align: center; font-weight: bold; color: #2ebe00; margin-top: 2px;">Finalizado ✅</div>`;
             return;
         }
-
         let color = '#7f9bff';
         if (concluido < previsto) {
             color = '#e13a16';
         }
-
         const width = Math.min(Math.max(concluido, 0), 100);
-
-        params.eGridCell.innerHTML = `
-            <div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px; margin-top: 5px;">
-                <div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div>
-            </div>
-        `;
+        params.eGridCell.innerHTML = `<div style="width: 100%; background-color: #ddd; border-radius: 5px; height: 16px; margin-top: 5px;"><div style="width: ${width}%; background-color: ${color}; height: 16px; border-radius: 5px;"></div></div>`;
     }
     """)
 
@@ -161,23 +181,10 @@ def mostrar_tabela(df_original, limpar_selecao=False):
         use_checkbox=False,
         return_df=True,
         custom_css={
-            ".ag-cell": {
-                "font-size": "12px",
-                "font-weight": "100",
-                "line-height": "22px",
-                "font-family": "'Raleway', sans-serif"
-            },
-            ".ag-header-cell-text": {
-                "font-size": "14px"
-            },
-            ".ag-header-cell-label": {
-                "justify-content": "center",
-                "align-items": "center"
-            },
-            ".selected-row": {
-                "background-color": "#394867 !important",
-                "color": "white !important"
-            }
+            ".ag-cell": {"font-size": "12px", "font-weight": "100", "line-height": "22px", "font-family": "'Raleway', sans-serif"},
+            ".ag-header-cell-text": {"font-size": "14px"},
+            ".ag-header-cell-label": {"justify-content": "center", "align-items": "center"},
+            ".selected-row": {"background-color": "#394867 !important", "color": "white !important"}
         },
     )
 
@@ -186,4 +193,5 @@ def mostrar_tabela(df_original, limpar_selecao=False):
     if selected is not None and not selected.empty:
         hierarquia = selected.iloc[0].get("hierarquia")
         return hierarquia
+
     return None

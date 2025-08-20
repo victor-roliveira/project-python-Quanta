@@ -27,7 +27,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         label_visibility="collapsed"
     )
 
-    # Identificadores
     df['hierarchy_id'] = df['hierarchy_path'].apply(lambda p: '.'.join(p))
     projetos_principais_numeros = {'3', '4', '5'}
 
@@ -42,7 +41,6 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     df_escopo['name_path'] = df_escopo['hierarchy_path'].apply(get_name_path)
     
-    # Adicionando 'termino' ao dicionário para consistência, caso seja usado no futuro
     status_columns = ['concluido', 'previsto', 'terceiros', 'inicio', 'termino']
     status_by_name_path = {
         tuple(str(v).strip() for v in k): {
@@ -52,11 +50,9 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         for k, v_dict in df_escopo.set_index('name_path')[status_columns].to_dict('index').items()
     }
 
-
     def natural_sort_key(hid):
         return tuple(int(x) for x in hid.split('.') if x.isdigit())
 
-    # DataFrame base
     etapas_df = df[
         df['hierarchy_path'].apply(lambda p: len(p) == 2 and p[0] in projetos_principais_numeros)
     ].copy()
@@ -66,7 +62,7 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
 
     if etapas_para_mostrar.size == 0:
         return st.warning("Nenhuma etapa (nível 2) encontrada para os projetos.")
-    # --- RENDERERS JAVASCRIPT ---
+
     barra_progress_renderer = JsCode("""
         function(params) {
             if (!params.value) return '';
@@ -87,11 +83,14 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         function(params) {
             const eGui = params.eGridCell;
             eGui.style.backgroundColor = 'transparent'; eGui.style.color = 'black'; eGui.style.fontWeight = 'normal';
-            if (params.value == null || typeof params.value !== 'object') { eGui.style.backgroundColor = '#4d4d4d'; return ''; }
-            const concluido_val = params.value.concluido || 0;
-            const previsto_val = params.value.previsto || 0;
-            const terceiros_val = params.value.terceiros || 0;
-            const inicio_str = params.value.inicio;
+            if (params.value == null || typeof params.value === 'string' && params.value.trim() === '') { eGui.style.backgroundColor = '#4d4d4d'; return ''; }
+            let data;
+            try { data = JSON.parse(params.value); } catch { eGui.style.backgroundColor = '#4d4d4d'; return ''; }
+            if (typeof data !== 'object') { eGui.style.backgroundColor = '#4d4d4d'; return ''; }
+            const concluido_val = data.concluido || 0;
+            const previsto_val = data.previsto || 0;
+            const terceiros_val = data.terceiros || 0;
+            const inicio_str = data.inicio;
             const concluido_percent = Math.round(concluido_val * 100);
             if (concluido_percent === 0) {
                 if (terceiros_val > 0) {
@@ -125,11 +124,9 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         }
     """)
     
-    # --- ALTERAÇÃO 2: Adicionar as colunas 'Início' e 'Término' ---
     column_defs = [
         {"headerName": "Etapa", "field": "Etapa", "pinned": "left", "width": 160, "cellStyle": {"fontWeight": "bold", "textAlign": "left"}},
         {"headerName": "Progresso", "field": "Progresso", "pinned": "left", "width": 90, "cellRenderer": barra_progress_renderer},
-        # Colunas adicionadas
         {"headerName": "Início", "field": "Início", "pinned": "left", "width": 90},
         {"headerName": "Término", "field": "Término", "pinned": "left", "width": 90},
     ]
@@ -141,59 +138,24 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
              "Plano de Trabalho": None,
              "Estudos Iniciais": ["Estudos Iniciais", "Visita Preliminar", "Topografia", "Planta Base da Área de Trabalho", "Sondagem", "Estudo Ambiental"],
              "Projetos Básicos": {
-                 "_folhas": ["Projetos Básicos"], 
-                 "Arquitetura": [
-                     "Arquitetura",
-                     "Projeto Arquitetônico",
-                     "Paisagismo",
-                     "Urbanismo",
-                     "Envio Engenahria"
-                 ],
-                 "Engenharia": {
-                     "Estrutural": None,
-                     "Hidrossanitário (Drenagem Reuso)": None,
-                     "Complementares": [
-                         "Complementares",
-                         "PCI",
-                         "HVAC",
-                         "AVAC", 
-                         "Gás"
-                     ],
-                     "Elétrico (CFRV Dados)": None,
-                     "Elétrico (CFTV Dados)": None, 
-                     "Energia Renovável": None,
-                     "Orçamento": None
-                 }
+                  "_folhas": ["Projetos Básicos"], 
+                  "Arquitetura": ["Arquitetura", "Projeto Arquitetônico", "Paisagismo", "Urbanismo", "Envio Engenahria"],
+                  "Engenharia": {
+                       "Estrutural": None, "Hidrossanitário (Drenagem Reuso)": None,
+                       "Complementares": ["Complementares", "PCI", "HVAC", "AVAC", "Gás"],
+                       "Elétrico (CFRV Dados)": None, "Elétrico (CFTV Dados)": None, "Energia Renovável": None, "Orçamento": None
+                  }
              },
              "Projetos Executivos": {
-                 "_folhas": ["Projetos Executivos", "Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"],
-                 "Arquitetura": [
-                     "Arquitetura",
-                     "Projeto Arquitetônico",
-                     "Paisagismo",
-                     "Urbanismo",
-                     "Entrega Orçamento"
-                 ],
-                 "Engenharia": {
-                     "Estrutural": None,
-                     "Impermeabilização": None,
-                     "Hidrossanitário (Drenagem Reuso)": None,
-                     "Reuso de Água": None, 
-                     "Complementares": [
-                         "Complementares",
-                         "PCI",
-                         "HVAC",
-                         "AVAC", 
-                         "Gás"
-                     ],
-                     "Elétrico (CFRV Dados)": None,
-                     "Elétrico (CFTV Dados)": None,
-                     "Energia Renovável": None,
-                     "Orçamento": None
-                 }
+                  "_folhas": ["Projetos Executivos", "Resumo do Projeto", "RE-Diretrizes para Operação e Manutenção"],
+                  "Arquitetura": ["Arquitetura", "Projeto Arquitetônico", "Paisagismo", "Urbanismo", "Entrega Orçamento"],
+                  "Engenharia": {
+                       "Estrutural": None, "Impermeabilização": None, "Hidrossanitário (Drenagem Reuso)": None, "Reuso de Água": None,
+                       "Complementares": ["Complementares", "PCI", "HVAC", "AVAC", "Gás"],
+                       "Elétrico (CFRV Dados)": None, "Elétrico (CFTV Dados)": None, "Energia Renovável": None, "Orçamento": None
+                  }
              },
-             "Modelagem Econômica-Financeira": None,
-             "Modelagem Jurídico Regulatório": None
+             "Modelagem Econômica-Financeira": None, "Modelagem Jurídico Regulatório": None
         }
 
         def build_cols_from_structure(structure, prefix=""):
@@ -235,15 +197,9 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         
         for etapa_id, etapa_name in etapas_para_mostrar:
             row_data = {'Etapa': etapa_name}
-            
-            # Busca todas as informações da etapa de uma só vez
             etapa_info = df.loc[df['hierarchy_id'] == etapa_id, ['concluido', 'previsto', 'inicio', 'termino']].iloc[0]
-
-            # Popula Progresso
             progress_info = etapa_info[['concluido', 'previsto']].to_dict()
             row_data['Progresso'] = json.dumps({'concluido': round(progress_info.get('concluido', 0) * 100), 'previsto': progress_info.get('previsto', 0)})
-            
-            # Popula Início e Término
             row_data['Início'] = etapa_info.get('inicio', '')
             row_data['Término'] = etapa_info.get('termino', '')
             
@@ -253,7 +209,16 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 relative_name_path = tuple(field_id.split('|'))
                 lookup_key = etapa_base_name_path + relative_name_path
                 status = status_by_name_path.get(lookup_key)
-                row_data[field_id] = status
+
+                # ==================================================================
+                # ✨ CORREÇÃO APLICADA AQUI (VIEW PROJETOS) ✨
+                # Converte o dicionário 'status' para uma string JSON.
+                # ==================================================================
+                if status is not None:
+                    row_data[field_id] = json.dumps(status)
+                else:
+                    row_data[field_id] = None
+                # ==================================================================
             grid_data.append(row_data)
 
     else: # Lógica "Geral Detalhada"
@@ -288,17 +253,13 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
         template_name_path_base = tuple(id_to_name_map.get('.'.join(template_etapa_id.split('.')[:i+1])) for i in range(2))
         column_defs.extend(build_nested_cols(template_etapa_id, template_name_path_base))
 
-        # --- ALTERAÇÃO 4: Popular os dados de 'Início' e 'Término' para a visualização 'Geral Detalhada' ---
-        # Criar um mapa com todas as informações necessárias
         etapa_info_map = df[df['hierarchy_path'].apply(len) == 2].set_index('hierarchy_id')[['concluido', 'previsto', 'inicio', 'termino']].to_dict('index')
 
         for etapa_id, etapa_name in etapas_para_mostrar:
-            # Inicializa os campos, incluindo os novos
             row_data = {'Etapa': etapa_name, 'Progresso': None, 'Início': '', 'Término': ''}
             
             etapa_info = etapa_info_map.get(etapa_id)
             if etapa_info:
-                # Popula Progresso, Início e Término
                 row_data['Progresso'] = json.dumps({'concluido': round(etapa_info.get('concluido', 0) * 100), 'previsto': etapa_info.get('previsto', 0)})
                 row_data['Início'] = etapa_info.get('inicio', '')
                 row_data['Término'] = etapa_info.get('termino', '')
@@ -308,7 +269,10 @@ def mostrar_tabela_projetos_especificos_aggrid(df_original, filtro_nome=None):
                 lookup_key = etapa_base_name_path + rel_name_path
                 field_key = "|".join(rel_name_path)
                 status = status_by_name_path.get(lookup_key)
-                row_data[field_key] = status
+                if status is not None:
+                    row_data[field_key] = json.dumps(status)
+                else:
+                    row_data[field_key] = None
             grid_data.append(row_data)
 
     tabela_para_grid = pd.DataFrame(grid_data)
