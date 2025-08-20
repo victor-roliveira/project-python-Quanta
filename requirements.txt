@@ -8,3 +8,5 @@ psycopg2-binary
 bcrypt
 python-dotenv
 streamlit-authenticator==0.3.3
+oauth2client
+gspread
