@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
-import io  # Importado para o debug
+import io 
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
@@ -125,26 +125,26 @@ tab_selecionada = st.radio(
 )
 
 if tab_selecionada == "📋 Tabela":
-    if "selecao_tabela" not in st.session_state:
-        st.session_state.selecao_tabela = None
-    if "limpar_selecao_tabela" not in st.session_state:
-        st.session_state.limpar_selecao_tabela = False
+    if "selecao_tabela_macae" not in st.session_state:
+        st.session_state.selecao_tabela_macae = None
+    if "limpar_selecao_tabela_macae" not in st.session_state:
+        st.session_state.limpar_selecao_tabela_macae = False
 
-    limpar = st.session_state.limpar_selecao_tabela
+    limpar = st.session_state.limpar_selecao_tabela_macae
     
     colunas_para_remover = ["execucao", "terceiros"]
     df_tabela_geral = df.drop(columns=[col for col in colunas_para_remover if col in df.columns])
     linha_selecionada = mostrar_tabela(df_tabela_geral, limpar_selecao=limpar)
 
     if limpar:
-        st.session_state.limpar_selecao_tabela = False
+        st.session_state.limpar_selecao_tabela_macae = False
 
     if linha_selecionada == 0:
-        st.session_state.selecao_tabela = None
+        st.session_state.selecao_tabela_macae = None
     elif linha_selecionada:
-        st.session_state.selecao_tabela = linha_selecionada
+        st.session_state.selecao_tabela_macae = linha_selecionada
 
-    selecao_valor = st.session_state.get("selecao_tabela")
+    selecao_valor = st.session_state.get("selecao_tabela_macae")
 
     if selecao_valor in ["0", "0.0"]:
         selecao_para_grafico = "Todos"

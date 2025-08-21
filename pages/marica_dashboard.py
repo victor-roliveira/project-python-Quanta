@@ -114,23 +114,23 @@ col1, col2, col3 =  st.columns([0.03, 0.03, 0.2])
 aba_tabela, aba_atrasadas = st.tabs(["📋 Tabela", "🚨 Atrasos Por Área"])
 
 with aba_tabela:
-    if "selecao_tabela" not in st.session_state:
-        st.session_state.selecao_tabela = None
-    if "limpar_selecao_tabela" not in st.session_state:
-        st.session_state.limpar_selecao_tabela = False
+    if "selecao_tabela_marica" not in st.session_state:
+        st.session_state.selecao_tabela_marica = None
+    if "limpar_selecao_tabela_marica" not in st.session_state:
+        st.session_state.limpar_selecao_tabela_marica = False
 
-    limpar = st.session_state.limpar_selecao_tabela
+    limpar = st.session_state.limpar_selecao_tabela_marica
     linha_selecionada = mostrar_tabela(df.drop(columns=["execucao"]), limpar_selecao=limpar)
 
     if limpar:
-        st.session_state.limpar_selecao_tabela = False
+        st.session_state.limpar_selecao_tabela_marica = False
 
     if linha_selecionada == 0:
-        st.session_state.selecao_tabela = None
+        st.session_state.selecao_tabela_marica = None
     elif linha_selecionada:
-        st.session_state.selecao_tabela = linha_selecionada
+        st.session_state.selecao_tabela_marica = linha_selecionada
 
-    selecao_valor = st.session_state.get("selecao_tabela")
+    selecao_valor = st.session_state.get("selecao_tabela_marica")
     selecao_valor = selecao_valor if selecao_valor else "Todos"
     mostrar_grafico(df, str(selecao_valor))
 
