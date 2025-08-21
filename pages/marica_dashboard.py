@@ -30,16 +30,13 @@ df["barra_info"] = df.apply(lambda row: {
     "concluido": round(row["concluido"] * 100),
     "previsto": round(row["previsto"])
 }, axis=1).apply(lambda x: str(x).replace("'", '"'))
-# Reordenar colunas (opcional)
+
 colunas = list(df.columns)
 idx = colunas.index("concluido")
 colunas.remove("barra_info") 
 colunas.insert(idx + 1, "barra_info")
 df = df[colunas]
 
-# =========================
-# Layout
-# =========================
 st.set_page_config(page_title="Dashboard Maricá", page_icon="icone-quanta.png",layout="wide")
 st.logo("logo-quanta-oficial.png", size="large")
 
