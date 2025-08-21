@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
 import time
-import io 
 from component_table import mostrar_tabela
 from component_graphbar import mostrar_grafico
 from component_graphbar_tasks_delay import mostrar_graficos_tarefas_atrasadas
 from auth_session import protect_page
 from component_overall import mostrar_tabela_projetos_especificos_aggrid
 
-st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png", layout="wide")
+st.set_page_config(page_title="Dashboard Macaé", page_icon="icone-quanta.png",layout="wide")
 st.logo("logo-quanta-oficial.png", size="large")
 
 protect_page()
@@ -24,7 +23,7 @@ st.markdown("""
             padding-top: 0px !important;
             padding-bottom: 0px !important;
         }
-        
+            
         /* Estilos da Sidebar */
         #root > div:nth-child(1) > div.withScreencast > div > div.stAppViewContainer.appview-container.st-emotion-cache-1yiq2ps.e4man110 > section > div.hideScrollbar.st-emotion-cache-jx6q2s.eu6y2f92 {
             background-color: #333333;
@@ -59,7 +58,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data
+@st.cache_data 
 def carregar_dados():
     df = pd.read_excel("ProjectEmExcel_MKE.xlsx")
 
@@ -79,11 +78,10 @@ def carregar_dados():
         "Terceirizadas": "terceiros"
     }
 
+    # Filtra o DataFrame para conter apenas as colunas necessárias e as renomeia.
     df_filtrado = df.rename(columns=lambda col: col.strip())[list(colunas_necessarias.keys())].copy()
     df_filtrado.rename(columns=colunas_necessarias, inplace=True)
     df = df_filtrado
-    
-    df['hierarquia'] = df['hierarquia'].astype(str)
     
     df["previsto"] = pd.to_numeric(df["previsto"], errors="coerce").fillna(0)
     df["concluido"] = pd.to_numeric(df["concluido"], errors="coerce").fillna(0)
@@ -98,7 +96,7 @@ def carregar_dados():
     df["inicio"] = pd.to_datetime(df["inicio"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
     df["termino"] = pd.to_datetime(df["termino"], format='%d/%m/%y', errors='coerce').dt.strftime('%d/%m/%Y')
     
-    df["hierarchy_path"] = df["hierarquia"].apply(lambda x: x.split("."))
+    df["hierarchy_path"] = df["hierarquia"].astype(str).apply(lambda x: x.split("."))
 
     df["barra_info"] = df.apply(lambda row: {
         "concluido": round(row["concluido"] * 100),
@@ -121,7 +119,7 @@ tab_selecionada = st.radio(
     ["📋 Tabela", "🚨 Atrasos Por Área", "ℹ️ Avanço Geral"],
     horizontal=True,
     label_visibility="collapsed",
-    key='main_tabs'
+    key='main_tabs' 
 )
 
 if tab_selecionada == "📋 Tabela":
